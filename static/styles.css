@@ -1,5 +1,5 @@
 body {
-    background-color: #fff;
+    background-color: #f8f9fa;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -9,7 +9,8 @@ body {
 }
 
 header {
-    background-color: #fff;
+    background-color: #343a40;
+    color: #fff;
 }
 
 header .container {
@@ -34,6 +35,7 @@ header .logo img {
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .title {
@@ -44,35 +46,45 @@ header .logo img {
 }
 
 .form {
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 20px;
     margin-bottom: 20px;
     position: fixed;
     bottom: 20px;
     width: calc(80% - 40px);
-    background: #fff;
-    padding: 10px;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
 }
 
-.form textarea {
-    padding: 10px;
+.textarea-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.textarea-container textarea {
+    padding: 10px 50px 10px 20px; /* Sağ tarafta buton için yer bırakın */
     border: 1px solid #dee2e6;
-    border-radius: 8px;
+    border-radius: 26px;
     font-size: 18px;
-    width: 90%;
-    height: 50px;
+    width: 100%;
+    height: auto;
+    max-height: 5em; /* 5 satır yüksekliği */
     resize: none;
     box-sizing: border-box;
     outline: none;
+    overflow-y: hidden; /* Başlangıçta scroll bar yok */
+    line-height: 1.2em; /* Satır yüksekliği */
+    min-height: 1.2em; /* İlk satır yüksekliği */
+    transition: height 0.2s ease;
+    /* text-align: center; */
+}
+
+.textarea-container textarea::placeholder {
+    text-align: start;
 }
 
 .submit-button {
-    padding: 10px;
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
     background-color: transparent;
     border: none;
     border-radius: 50%;
@@ -80,6 +92,12 @@ header .logo img {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 5px;
+    opacity: 0.3;
+}
+
+.submit-button.active {
+    opacity: 1;
 }
 
 .submit-button img {
@@ -98,4 +116,16 @@ header .logo img {
     overflow-y: auto;
     box-sizing: border-box;
     word-wrap: break-word;
+}
+
+.alert {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.alert.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
 }

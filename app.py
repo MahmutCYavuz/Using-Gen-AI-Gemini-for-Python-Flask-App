@@ -1,7 +1,7 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import markdown
 import google.generativeai as genai
-import os
 from dotenv import load_dotenv
 
 # Çevresel değişkenleri yükle
@@ -39,4 +39,4 @@ def index():
     return render_template('index.html', result1=result1)
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    app.run(debug=True, port=5002)
