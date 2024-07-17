@@ -26,15 +26,11 @@
                 </button>
             </div>
         </form>
-        <h3>Davacı Argümanları:</h3>
-        <div class="result-container">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-              {% if messages %}
-                {% for category, message in messages %}
-                  <div class="alert {{ category }}">{{ message }}</div>
-                {% endfor %}
-              {% endif %}
-            {% endwith %}
+        <div id="loading-animation" class="loading-animation-container" style="display:none;">
+            <div class="loading-animation"></div>
+            <div class="loading-animation"></div>
+            <div class="loading-animation"></div>
+        </div> <!-- Yüklenme animasyonu -->        <div class="result-container">
             {% if result1 %}
                 <div class="result-content">{{ result1 | safe }}</div>
             {% endif %}
@@ -43,6 +39,9 @@
     <script>
         const inputText = document.getElementById('input_text');
         const submitButton = document.querySelector('.submit-button');
+        const form = document.querySelector('.form');
+        const loadingAnimation = document.getElementById('loading-animation');
+        const resultContainer = document.querySelector('.result-container');
 
         inputText.addEventListener('input', () => {
             if (inputText.value.trim().length > 0) {
@@ -52,8 +51,6 @@
                 submitButton.setAttribute('disabled', 'disabled');
                 submitButton.classList.remove('active');
             }
-
-            // Otomatik genişleyen textarea
             inputText.style.height = 'auto';
             const maxHeight = parseInt(window.getComputedStyle(inputText).lineHeight) * 5;
             if (inputText.scrollHeight > maxHeight) {
@@ -63,6 +60,11 @@
                 inputText.style.height = inputText.scrollHeight + 'px';
                 inputText.style.overflowY = 'hidden';
             }
+        });
+
+        form.addEventListener('submit', () => {
+            loadingAnimation.style.display = 'block'; // Animasyonu göster
+            resultContainer.style.display = 'none'; // Sonuçları gizle
         });
     </script>
 </body>

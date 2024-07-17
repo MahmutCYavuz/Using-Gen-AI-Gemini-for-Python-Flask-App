@@ -1,6 +1,38 @@
+.loading-animation-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+}
+
+.loading-animation {
+    width: 100%;
+    height: 21px;
+    background: linear-gradient(90deg, white 0%, #1b7c60  100%);
+    background-size: 200% 100%;
+    animation: loading 1s linear infinite;
+    border-radius: 10px;
+    margin: 0.6em;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 100% 0;
+    }
+    100% {
+        background-position: 0 0;
+    }
+}
+@font-face {
+    font-family: 'Pluto Sans Light';
+    src: url('fonts/Pluto Sans Light.otf') format('opentype');
+}
+
 body {
     background-color: #f8f9fa;
-    font-family: Arial, sans-serif;
+    font-family:Arial, sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
@@ -9,7 +41,6 @@ body {
 }
 
 header {
-    background-color: #343a40;
     color: #fff;
 }
 
@@ -35,7 +66,6 @@ header .logo img {
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .title {
@@ -43,6 +73,7 @@ header .logo img {
     margin-bottom: 10px;
     text-align: center;
     color: #1b7c60;
+    font-family: 'Pluto Sans Light', Arial, sans-serif; /* Yeni fontu uygulayın */
 }
 
 .form {
@@ -59,13 +90,14 @@ header .logo img {
 }
 
 .textarea-container textarea {
+    background-color: #f8f9fa;
     padding: 10px 50px 10px 20px; /* Sağ tarafta buton için yer bırakın */
-    border: 1px solid #dee2e6;
+    border: 1px solid #fff;
     border-radius: 26px;
     font-size: 18px;
     width: 100%;
-    height: auto;
-    max-height: 5em; /* 5 satır yüksekliği */
+    height: 40px;
+    max-height: calc(1.2em * 10); /* 7 satır yüksekliği */
     resize: none;
     box-sizing: border-box;
     outline: none;
@@ -73,11 +105,15 @@ header .logo img {
     line-height: 1.2em; /* Satır yüksekliği */
     min-height: 1.2em; /* İlk satır yüksekliği */
     transition: height 0.2s ease;
-    /* text-align: center; */
+    overflow-y: auto;
 }
 
 .textarea-container textarea::placeholder {
     text-align: start;
+    display: flex;
+    align-items: center;
+    height: 100%; /* Placeholder'ı dikey ortalamak için */
+    /* line-height: 100%; */
 }
 
 .submit-button {
@@ -101,18 +137,20 @@ header .logo img {
 }
 
 .submit-button img {
-    max-width: 40px;
-    max-height: 40px;
+    max-width: 30px;
+    max-height: 30px;
 }
 
 .result-container {
+    background-color: #fff;
     margin-top: 20px;
     padding: 10px;
-    border: 1px solid #dee2e6;
+    border: 1px solid #fff;
     border-radius: 8px;
     font-size: 18px;
     width: 100%;
-    height: 250px;
+    height: auto;
+    max-height: 380px;
     overflow-y: auto;
     box-sizing: border-box;
     word-wrap: break-word;
