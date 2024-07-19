@@ -29,7 +29,7 @@ GEN AI Lawyer Simulation, hukuki argümanları simüle etmek için AI kullanan F
 ```bash
    API_KEY= 'Your_API_KEY' 
 SECRET_KEY='Your_SECRET_KEY'
-
+```
 ### Kurulum
 
 1. **Depoyu Klonlayın:**
