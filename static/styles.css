@@ -92,7 +92,7 @@ header .logo img {
 
 .textarea-container textarea {
     background-color: #f8f9fa;
-    padding: 10px 50px 10px 20px; /* Sağ tarafta buton için yer bırakın */
+    padding: 10px 50px 10px 50px; /* Sağ tarafta buton için yer bırakın */
     border: 1px solid #fff;
     border-radius: 26px;
     font-size: 18px;
@@ -104,9 +104,9 @@ header .logo img {
     overflow-y: hidden;
     line-height: 1.2em;
     min-height: 1.2em;
-    /* transition: height 0.2s ease; */
-    /* overflow-y: auto; */
-    /* max-height: calc(1.2em * 7); 7 satır yüksekliği */
+    transition: height 0.2s ease; 
+    overflow-y: auto; 
+     max-height: calc(1.2em * 7);  
 }
 
 .textarea-container textarea::placeholder {
@@ -114,6 +114,17 @@ header .logo img {
     display: flex;
     align-items: center;
     height: 100%;
+}
+.file-upload-icon {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    cursor: pointer;
+}
+
+.file-upload-icon img {
+    width: 25px; /* Dosya yükleme ikonu boyutu */
+    height: 25px;
 }
 
 .submit-button {
@@ -151,7 +162,7 @@ header .logo img {
     width: 100%; /* Form ile aynı genişlik */
     height: auto;
     max-height: 380px;
-    overflow-y: hidden;
+    overflow-y: auto;
     box-sizing: border-box;
     word-wrap: break-word;
 }
