@@ -27,10 +27,11 @@
             </div>
         </form>
         <div id="loading-animation" class="loading-animation-container" style="display:none;">
-            <div class="loading-animation"></div>
-            <div class="loading-animation"></div>
-            <div class="loading-animation"></div>
-        </div> <!-- Yüklenme animasyonu -->        <div class="result-container">
+            <div class="loading-animation" style="animation-delay: 0s;"></div>
+            <div class="loading-animation" style="animation-delay: 0.2s;"></div>
+            <div class="loading-animation" style="animation-delay: 0.4s;"></div>
+        </div> <!-- Yüklenme animasyonu -->        
+        <div class="result-container">
             {% if result1 %}
                 <div class="result-content">{{ result1 | safe }}</div>
             {% endif %}
@@ -52,7 +53,7 @@
                 submitButton.classList.remove('active');
             }
             inputText.style.height = 'auto';
-            const maxHeight = parseInt(window.getComputedStyle(inputText).lineHeight) * 5;
+            const maxHeight = parseInt(window.getComputedStyle(inputText).lineHeight) * 7;
             if (inputText.scrollHeight > maxHeight) {
                 inputText.style.height = maxHeight + 'px';
                 inputText.style.overflowY = 'scroll';
@@ -62,9 +63,23 @@
             }
         });
 
-        form.addEventListener('submit', () => {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault(); // Formun otomatik gönderimini engelle
             loadingAnimation.style.display = 'block'; // Animasyonu göster
             resultContainer.style.display = 'none'; // Sonuçları gizle
+            form.submit(); // Formu manuel olarak gönder
+        });
+
+        // Enter tuşunu submit butonuna bağla
+        inputText.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (!submitButton.hasAttribute('disabled')) {
+                    loadingAnimation.style.display = 'block'; // Animasyonu göster
+                    resultContainer.style.display = 'none'; // Sonuçları gizle
+                    form.submit();
+                }
+            }
         });
     </script>
 </body>
