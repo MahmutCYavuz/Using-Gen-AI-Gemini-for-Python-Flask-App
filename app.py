@@ -5,7 +5,8 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import docx
-import PyPDF2
+from PyPDF2 import PdfReader
+
 
 # Çevresel değişkenleri yükle
 load_dotenv()
@@ -27,12 +28,14 @@ def allowed_file(filename):
 
 def extract_text_from_pdf(file_path):
     text = ""
-    with open(file_path, 'rb') as file:
-        reader = PyPDF2.PdfFileReader(file)
-        for page_num in range(reader.numPages):
-            page = reader.getPage(page_num)
-            text += page.extractText()
+    try:
+        reader = PdfReader(file_path)
+        for page in reader.pages:
+            text += page.extract_text()
+    except Exception as e:
+        print(f"Error reading PDF file: {e}")
     return text
+
 
 def extract_text_from_docx(file_path):
     doc = docx.Document(file_path)
@@ -80,3 +83,4 @@ def index():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+

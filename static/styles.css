@@ -32,7 +32,7 @@
 }
 
 body {
-    background-color: #f8f9fa;
+    background-color: #fff;
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
@@ -88,6 +88,8 @@ header .logo img {
     position: relative;
     display: flex;
     align-items: center;
+    flex-direction: column; /* Flex yönünü değiştir */
+    align-items: flex-start;
 }
 
 .textarea-container textarea {
@@ -104,9 +106,8 @@ header .logo img {
     overflow-y: hidden;
     line-height: 1.2em;
     min-height: 1.2em;
-    transition: height 0.2s ease; 
-    overflow-y: auto; 
-     max-height: calc(1.2em * 7);  
+    /* transition: height 0.2s ease; */
+    max-height: calc(1.2em * 7);  
 }
 
 .textarea-container textarea::placeholder {
@@ -128,7 +129,7 @@ header .logo img {
 }
 
 .submit-button {
-    position: absolute;
+    position:absolute;
     right: 10px;
     top: 50%;
     transform: translateY(-50%);
@@ -198,6 +199,24 @@ textarea::-webkit-scrollbar-thumb,
 }
 
 textarea::-webkit-scrollbar-thumb:hover,
-.result-container::-webkit-scrollbar-thumb:hover {
+result-container::-webkit-scrollbar-thumb:hover {
     background: #555;
+}
+
+/* Yeni dosya bilgi alanı için stil */
+.file-info {
+    display: flex;
+    align-items: center;
+    margin: 0 0 10px 50px;
+}
+
+.file-info .file-icon {
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+}
+
+.file-info .file-name {
+    font-size: 16px;
+    color: #333;
 }

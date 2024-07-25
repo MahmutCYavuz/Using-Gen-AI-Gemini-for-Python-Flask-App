@@ -24,6 +24,10 @@
                     <img src="{{ url_for('static', filename='image/upload_icon.svg') }}" alt="Yükle">
                 </label>
                 <input type="file" id="file-input" name="file" accept=".pdf, .docx" style="display: none;">
+                <div id="file-info" class="file-info" style="display:none;">
+                    <img id="file-icon" src="" alt="Dosya İkonu" class="file-icon">
+                    <span id="file-name" class="file-name"></span>
+                </div>
                 <textarea id="input_text" name="input_text" placeholder="Dava Metni" required></textarea>
                 <button type="submit" class="submit-button" disabled>
                     <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
@@ -32,8 +36,11 @@
         </form>
         <div id="loading-animation" class="loading-animation-container" style="display:none;">
             <div class="loading-animation" style="animation-delay: 0s;"></div>
-            <div class="loading-animation" style="animation-delay: 0.2s;"></div>
-            <div class="loading-animation" style="animation-delay: 0.4s;"></div>
+            <div class="loading-animation" style="animation-delay: 0s;"></div>
+            <div class="loading-animation" style="animation-delay: 0s;"></div>
+            <div class="loading-animation" style="animation-delay: 0s;"></div>
+            <div class="loading-animation" style="animation-delay: 0s;"></div>
+            <div class="loading-animation" style="animation-delay: 0s;"></div>
         </div> <!-- Yüklenme animasyonu -->        
         <div class="result-container">
             {% if result1 %}
@@ -48,6 +55,9 @@
         const loadingAnimation = document.getElementById('loading-animation');
         const resultContainer = document.querySelector('.result-container');
         const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const fileIcon = document.getElementById('file-icon');
+        const fileName = document.getElementById('file-name');
 
         inputText.addEventListener('input', () => {
             if (inputText.value.trim().length > 0) {
@@ -86,14 +96,30 @@
                 }
             }
         });
-        // Dosya yüklendiğinde butonu aktif hale getirme
+
+        // Dosya yüklendiğinde butonu aktif hale getirme ve dosya bilgilerini gösterme
         fileInput.addEventListener('change', () => {
             if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                fileName.textContent = file.name;
+
+                // Dosya türüne göre ikon belirleme
+                const fileType = file.type;
+                if (fileType === 'application/pdf') {
+                    fileIcon.src = '{{ url_for('static', filename='image/pdf_icon.png') }}';
+                } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
+                    fileIcon.src = '{{ url_for('static', filename='image/word_icon.png') }}';
+                } else {
+                    fileIcon.src = '{{ url_for('static', filename='image/file_icon.png') }}';
+                }
+
+                fileInfo.style.display = 'flex';
                 submitButton.removeAttribute('disabled');
                 submitButton.classList.add('active');
                 inputText.value = ''; // Input text alanını temizle
                 inputText.setAttribute('disabled', 'disabled'); // Input text alanını devre dışı bırak
             } else {
+                fileInfo.style.display = 'none';
                 submitButton.setAttribute('disabled', 'disabled');
                 submitButton.classList.remove('active');
                 inputText.removeAttribute('disabled'); // Input text alanını etkinleştir
