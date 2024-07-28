@@ -85,9 +85,11 @@ header .logo img {
 }
 
 .textarea-container {
+    background-color: #f8f9fa;
+    border-radius: 26px;
+    padding-top: 5px;
     position: relative;
     display: flex;
-    align-items: center;
     flex-direction: column; /* Flex yönünü değiştir */
     align-items: flex-start;
 }
@@ -95,7 +97,7 @@ header .logo img {
 .textarea-container textarea {
     background-color: #f8f9fa;
     padding: 10px 50px 10px 50px; /* Sağ tarafta buton için yer bırakın */
-    border: 1px solid #fff;
+    border: none;
     border-radius: 26px;
     font-size: 18px;
     width: 100%;
@@ -207,7 +209,11 @@ result-container::-webkit-scrollbar-thumb:hover {
 .file-info {
     display: flex;
     align-items: center;
-    margin: 0 0 10px 50px;
+    margin: 5px 0 10px 50px;
+    padding: 10px;
+    background-color: #fff;
+    border: 0.5px solid #efefef;
+    border-radius: 10px;
 }
 
 .file-info .file-icon {
@@ -217,6 +223,7 @@ result-container::-webkit-scrollbar-thumb:hover {
 }
 
 .file-info .file-name {
+    
     font-size: 16px;
     color: #333;
 }
