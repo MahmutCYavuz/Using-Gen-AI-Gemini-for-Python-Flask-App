@@ -106,25 +106,26 @@
                 // Dosya türüne göre ikon belirleme
                 const fileType = file.type;
                 if (fileType === 'application/pdf') {
-                    fileIcon.src = '{{ url_for('static', filename='image/pdf_icon.png') }}';
-                } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
-                    fileIcon.src = '{{ url_for('static', filename='image/word_icon.png') }}';
-                } else {
-                    fileIcon.src = '{{ url_for('static', filename='image/file_icon.png') }}';
-                }
+    fileIcon.src = "{{ url_for('static', filename='image/pdf_icon.png') }}";
+} else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
+    fileIcon.src = "{{ url_for('static', filename='image/word_icon.png') }}";
+} else {
+    fileIcon.src = "{{ url_for('static', filename='image/file_icon.png') }}";
+}
 
-                fileInfo.style.display = 'flex';
-                submitButton.removeAttribute('disabled');
-                submitButton.classList.add('active');
-                inputText.value = ''; // Input text alanını temizle
-                inputText.setAttribute('disabled', 'disabled'); // Input text alanını devre dışı bırak
-            } else {
-                fileInfo.style.display = 'none';
-                submitButton.setAttribute('disabled', 'disabled');
-                submitButton.classList.remove('active');
-                inputText.removeAttribute('disabled'); // Input text alanını etkinleştir
-            }
-        });
+fileInfo.style.display = 'flex';
+submitButton.removeAttribute('disabled');
+submitButton.classList.add('active');
+inputText.value = ''; // Input text alanını temizle
+inputText.setAttribute('disabled', 'disabled'); // Input text alanını devre dışı bırak
+} else {
+    fileInfo.style.display = 'none';
+    submitButton.setAttribute('disabled', 'disabled');
+    submitButton.classList.remove('active');
+    inputText.removeAttribute('disabled'); // Input text alanını etkinleştir
+}
+});
+
         
     </script>
 </body>
