@@ -39,6 +39,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+        
 }
 
 header {
@@ -156,6 +157,7 @@ header .logo img {
 }
 
 .result-container {
+    display: none; /* Başlangıçta gizli */
     background-color: #fff;
     margin-top: 20px;
     padding: 10px;
@@ -226,4 +228,32 @@ result-container::-webkit-scrollbar-thumb:hover {
     
     font-size: 16px;
     color: #333;
+}
+/* Mevcut CSS kodlarınızın sonuna ekleyin */
+
+.tabs {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.tab-button {
+    background-color: #f8f9fa;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.tab-button.active {
+    background-color: #1b7c60;
+    color: white;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
 }

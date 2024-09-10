@@ -18,6 +18,14 @@
         </div>
     </header>
     <div class="container">
+        <div id="tabs" class="tabs" style="display: none;">
+            <button class="tab-button active" data-tab="ozet">Dilekçe Özeti</button>
+            <button class="tab-button" data-tab="kronoloji">Davanın Kronolojisi</button>
+            <button class="tab-button" data-tab="emsal">Emsal Yargıtay Kararları</button>
+            <button class="tab-button" data-tab="icerik">Dilekçe İçeriği</button>
+            <button class="tab-button" data-tab="argumanlar">Davacının Argümanları</button>
+            <button class="tab-button" data-tab="gozden-kacan">Gözden Kaçan Argümanlar</button>
+        </div>
         <form method="post" class="form" enctype="multipart/form-data">
             <div class="textarea-container">
                 <label for="file-input" class="file-upload-icon">
@@ -28,7 +36,7 @@
                     <img id="file-icon" src="" alt="Dosya İkonu" class="file-icon">
                     <span id="file-name" class="file-name"></span>
                 </div>
-                <textarea id="input_text" name="input_text" placeholder="Dava Metni" required></textarea>
+                <textarea id="input_text" name="input_text" placeholder="Dava Dilekçesi"></textarea>
                 <button type="submit" class="submit-button" disabled>
                     <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
                 </button>
@@ -44,89 +52,16 @@
         </div> <!-- Yüklenme animasyonu -->        
         <div class="result-container">
             {% if result1 %}
-                <div class="result-content">{{ result1 | safe }}</div>
+                <div id="ozet" class="tab-content active">{{ result1.get('DİLEKÇE ÖZETİ', '') | safe }}</div>
+                <div id="kronoloji" class="tab-content">{{ result1.get('DAVANIN KRONOLOJİSİ', '') | safe }}</div>
+                <div id="emsal" class="tab-content">{{ result1.get('EMSAL YARGITAY KARARI', '') | safe }}</div>
+                <div id="icerik" class="tab-content">{{ result1.get('DİLEKÇE İÇERİĞİ', '') | safe }}</div>
+                <div id="argumanlar" class="tab-content">{{ result1.get('DAVACININ ARGÜMANLARI', '') | safe }}</div>
+                <div id="gozden-kacan" class="tab-content">{{ result1.get('GÖZDEN KAÇAN ARGÜMANLAR', '') | safe }}</div>
             {% endif %}
         </div>
     </div>
-    <script>
-        const inputText = document.getElementById('input_text');
-        const submitButton = document.querySelector('.submit-button');
-        const form = document.querySelector('.form');
-        const loadingAnimation = document.getElementById('loading-animation');
-        const resultContainer = document.querySelector('.result-container');
-        const fileInput = document.getElementById('file-input');
-        const fileInfo = document.getElementById('file-info');
-        const fileIcon = document.getElementById('file-icon');
-        const fileName = document.getElementById('file-name');
-
-        inputText.addEventListener('input', () => {
-            if (inputText.value.trim().length > 0) {
-                submitButton.removeAttribute('disabled');
-                submitButton.classList.add('active');
-            } else {
-                submitButton.setAttribute('disabled', 'disabled');
-                submitButton.classList.remove('active');
-            }
-            inputText.style.height = 'auto';
-            const maxHeight = parseInt(window.getComputedStyle(inputText).lineHeight) * 7;
-            if (inputText.scrollHeight > maxHeight) {
-                inputText.style.height = maxHeight + 'px';
-                inputText.style.overflowY = 'scroll';
-            } else {
-                inputText.style.height = inputText.scrollHeight + 'px';
-                inputText.style.overflowY = 'hidden';
-            }
-        });
-
-        form.addEventListener('submit', (e) => {
-            e.preventDefault(); // Formun otomatik gönderimini engelle
-            loadingAnimation.style.display = 'block'; // Animasyonu göster
-            resultContainer.style.display = 'none'; // Sonuçları gizle
-            form.submit(); // Formu manuel olarak gönder
-        });
-
-        // Enter tuşunu submit butonuna bağla
-        inputText.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                if (!submitButton.hasAttribute('disabled')) {
-                    loadingAnimation.style.display = 'block'; // Animasyonu göster
-                    resultContainer.style.display = 'none'; // Sonuçları gizle
-                    form.submit();
-                }
-            }
-        });
-
-        // Dosya yüklendiğinde butonu aktif hale getirme ve dosya bilgilerini gösterme
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                fileName.textContent = file.name;
-
-                // Dosya türüne göre ikon belirleme
-                const fileType = file.type;
-                if (fileType === 'application/pdf') {
-    fileIcon.src = "{{ url_for('static', filename='image/pdf_icon.png') }}";
-} else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
-    fileIcon.src = "{{ url_for('static', filename='image/word_icon.png') }}";
-} else {
-    fileIcon.src = "{{ url_for('static', filename='image/file_icon.png') }}";
-}
-
-fileInfo.style.display = 'flex';
-submitButton.removeAttribute('disabled');
-submitButton.classList.add('active');
-inputText.value = ''; // Input text alanını temizle
-inputText.setAttribute('disabled', 'disabled'); // Input text alanını devre dışı bırak
-} else {
-    fileInfo.style.display = 'none';
-    submitButton.setAttribute('disabled', 'disabled');
-    submitButton.classList.remove('active');
-    inputText.removeAttribute('disabled'); // Input text alanını etkinleştir
-}
-});
-
-        
-    </script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
+
 </html>
