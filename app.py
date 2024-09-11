@@ -2,17 +2,19 @@ import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import markdown
 import google.generativeai as genai
+import openai 
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import docx
 from PyPDF2 import PdfReader
 import re
-# from transformers import pipeline
+from transformers import pipeline
 
 # Çevresel değişkenleri yükle
 load_dotenv()
 
-genai.configure(api_key=os.getenv('API_KEY'))
+# genai.configure(api_key=os.getenv('API_KEY'))
+openai.api_key = os.getenv('OPENAI_API_KEY')  # Bu satırı ekleyin
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Gizli anahtar .env dosyasından alınır
@@ -42,6 +44,110 @@ def extract_text_from_docx(file_path):
     doc = docx.Document(file_path)
     return "\n".join([para.text for para in doc.paragraphs])
 
+# Load the Turkish NER model from Hugging Face
+
+ner_model = pipeline("ner", model="savasy/bert-base-turkish-ner-cased", aggregation_strategy="simple")
+
+# PDF metnini temizleme ve normalize etme
+def clean_text(text):
+    # Birden fazla boşluğu tek bir boşluk yap
+    text = re.sub(r'\s+', ' ', text)
+    # Gereksiz karakterleri kaldırma
+    text = re.sub(r'[^\w\s.,:]', '', text)
+    return text
+
+
+# Function to mask sensitive data
+def redact_sensitive_info(text):
+    # Anahtar kelimelerden sonra gelen isimleri maskeleme fonksiyonu
+    def mask_after_keywords(match):
+        return f"{match.group(1)}: ********"
+
+    # 1. Kural: DAVACI, DAVALI, VEKİLİ, Av., HUKUK BÜROSU kelimelerinden sonra gelen isimler maskelenecek
+    text = re.sub(r'\b(DAVACI|DAVALI|VEKİLİ|Av\.|HUKUK BÜROSU)\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+\b', mask_after_keywords, text)
+    entities = ner_model(text)
+
+    # Bulunan isim ve soyisimleri ayrı ayrı ve birlikte topla
+    names = set()
+    full_names = set()
+
+    for entity in entities:
+        if entity['entity_group'] == 'PER':
+            names.add(entity['word'])
+            full_names.add(entity['word'])
+
+    # İsim ve soyisimleri birlikte ve ayrı ayrı maskele
+    for full_name in full_names:
+        # Tam ismi maskele
+        pattern = re.compile(rf'\b{full_name}(\w*)\b', re.IGNORECASE)
+        text = pattern.sub(lambda m: '****' + m.group(1), text)
+
+        # İsim ve soyisimleri ayrı ayrı maskele
+        for name in full_name.split():
+            pattern = re.compile(rf'\b{name}(\w*)\b', re.IGNORECASE)
+            text = pattern.sub(lambda m: '****' + m.group(1), text)
+    # 2. Kural: Özel olarak "DAVACI:" ve "DAVALI:" ifadesinden sonra gelen isimler maskelenecek
+    # DAVACI ve DAVALI'dan sonra gelen isimleri doğru şekilde maskeleme
+    text = re.sub(r"(DAVACI|DAVALI)\s*:\s*[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)*", r"\1: ******** ******** **** **** **** **** **** ****** ******* ****************** ", text)
+    text = re.sub(r'(DAVACI|DAVALI|VEKİLİ|Av\.|HUKUK BÜROSU)\s*:\s*[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)*', r'\1: ******** ******** **** ***** ****** **** *********** ', text)
+    text = re.sub(r'(DAVALI:\s*)(.*?)(\(VKN:\s*\d{10}\))', r'\1 ****** \3', text)
+    text = re.sub(r'(SAN\s+ve\s+TİC\.?\s+A\.Ş\.?|Ltd\.?\s+Şti\.?|A\.Ş\.?|Tic\.?|Şti\.?|SAN\.?)', '******', text)
+    text = re.sub(r'(\b[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+\s+(SAN\.?\s+ve\s+TİC\.?\s+A\.Ş\.?|Ltd\.?\s+Şti\.?|Şti\.?|A\.Ş\.?|Tic\.?))', '******', text)
+    text = re.sub(r'(DAVACI|DAVALI)\s*:\s*(.*?)(?=\s|$)', r'\1: ******** *********** ******* ******* ******* ****** ***** **** ***** *************************', text)
+     # DAVACI, DAVALI, VEKİLİ, Av., HUKUK BÜROSU kelimelerinden sonra gelen isimleri maskeleme
+
+
+    #text = re.sub(r"(DAVACI|DAVALI)\s*:\s*[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+\b", r"\1: ******** ********", text)
+
+    # 3. Kural: Telefon numaralarını tespit edip maskeleme (10 haneli numaralar, boşluklu ve boşluksuz)
+    phone_pattern = r'\b(0\d{3})\s*\d{3}\s*\d{2}\s*\d{2}\b|\b(0\d{3})\d{7}\b'
+    text = re.sub(phone_pattern, r'\1 *** ** **', text)
+
+    # 4. Kural: Adres tespit ve maskeleme (adres ifadeleri: Sokak, Cadde, Mahalle, No vb.)
+    address_pattern = r'\b\S+\s+(Sokak|Sok|Cadde|Cad.|Cd.|Mh.|Mah.|Mahalle|Mahallesi|Apartman|Apartmanı|Blok|No|Kat|Daire|Daire:)\b.*'
+    text = re.sub(address_pattern, '**** adres ****', text)
+
+    # 5. Kural: Şirket isimlerini maskeleme (örnek: HİSTAŞ HİSAR İNŞ. TUR. SAN ve TİC. A.Ş.)
+    company_pattern = r'\b[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+)+\s+(San\.|Tic\.|Ltd\.|A\.Ş\.|Şti\.)\b'
+    text = re.sub(company_pattern, '******** ********', text)
+
+    # 6. Kural: Mahkeme isimlerini maskeleme (örnek: Sulh Hukuk Mahkemesi)
+    court_pattern = r'\b([A-ZÇĞİÖŞÜÜ]+)\s+([A-ZÇĞİÖŞÜÜ]+)\s+\([A-ZÇĞİÖŞÜÜ]+\)\s+[HUKUK]\s+[MAHKEMESİ]\b'
+    text = re.sub(court_pattern, '******** ********', text)
+
+    # 7. Kural: Şehir ve ilçe isimlerini maskeleme (örnek: Beşiktaş/İst.)
+    
+    city_pattern = r'\b([A-ZÇĞİÖŞÜ][a-zçğıöşü]+)/([A-ZÇĞİÖŞÜ]+)\b'
+    text = re.sub(city_pattern, '********/********', text)
+
+    # 8. Kural: TCKN ve VKN numaralarını maskeleme
+    text = re.sub(r'TCKN:\s*\d{11}', 'TCKN: ***********', text)
+    text = re.sub(r'VKN:\s*\d{10}', 'VKN: **********', text)
+    
+    # mernis no
+
+    # 9. Kural: Doğum tarihlerini tespit edip maskeleme (dd/mm/yyyy veya dd-mm-yyyy formatında)
+    date_pattern = r'\b\d{2}[/-]\d{2}[/-]\d{4}\b'
+    text = re.sub(date_pattern, '****/****/****', text)
+
+    # 10. Kural: Dava esas ve karar numaralarını maskele (örn: 2022/1809 E.)
+    #text = re.sub(r'\b(\d{4}/\d{4,6}\s*(E|K))\b', '****/**** **', text)
+
+    # 11. Ekstra Pattern'ler:
+    # İsimler, adresler, davacı/davalı ve avukat bilgileri, mahkeme isimleri gibi bilgileri ekliyoruz
+    patterns = [
+        #r"\b[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+)*\b",  # İsimler
+        r"\b[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+)*\s+(Mah\.|Cad\.|Sok\.)\s*\d+",  # Adresler
+        r"DAVACI:\s+(.*?)\s*(?=(DAVALI|Av\.))",  # Davacı ve tüm bilgileri (sonraki başlık bulunana kadar)
+        r"DAVALI:\s+(.*?)\s*(?=(VEKİLİ|$))",  # Davalı ve tüm bilgileri (sonraki başlık bulunana kadar)
+        r"Av\.\s+(.*?)\s*(?=\s|$)",  # Avukat ismi
+        r"([A-ZÇĞİÖŞÜÜ]+)\s+([A-ZÇĞİÖŞÜÜ]+)\s+\([A-ZÇĞİÖŞÜÜ]+\)\s+[HUKUK]\s+[MAHKEMESİ]",  # Mahkeme adı (daha genel)
+    ]
+
+    for pattern in patterns:
+        text = re.sub(pattern, '********', text)
+
+    return text
 
 
 # Hugging Face'den Türkçe NER modeli yükleniyor
@@ -147,34 +253,59 @@ def index():
         
         if not input_text:
             return "Geçersiz istek: Metin veya dosya gerekli", 400
-        
-        model = genai.GenerativeModel('gemini-pro')
+        input_text = redact_sensitive_info(input_text)
+        print(input_text)        
+        # model = genai.GenerativeModel('gemini-pro')
         try:
-            prompt = """Her bölümü verdiğim başlıklar altında yazdır,
-                aşağıdaki davada dilekçeyi özetle 'DİLEKÇE ÖZETİ',
-                ardından yaşanılan durumları kronolojik olarak sırala 'DAVANIN KRONOLOJİSİ',
-                ardından Dilekçedeki argumanları dogrulayacak emsal yargıtay kararlarını çıkar 'EMSAL YARGITAY KARARI',
-                içeriğini yazdır,'DİLEKÇE İÇERİĞİ',
-                davacı argümanlarını oluştur,'DAVACININ ARGÜMANLARI',
-                bu metin içeriğinde gözümden kaçırdığım ve mahkemede beni zorlayacak argümanları listele 'GÖZDEN KAÇAN ARGÜMANLAR',
-                Bu dava metnini aşağıda yazacağım. Hukuki Dava metnine benzemeyen promptlara "Sadece hukuki davalara cevap veriyorum!" cevabını ilet. Dava Metni:""" + input_text
+            prompt = """
+            Aşağıdaki dava metnini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde 'DİLEKÇE ÖZETİ:' başlığı altında,
+            Davanın Kronolojik sıralamasını ve olayları 'DAVANIN KRONOLOJİSİ:' başlığı altında,
+            Davaya ilişkin geçmiş emsal yargıtay kararlarınıN url'sini internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
+            Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
+            Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında yaz.
+            Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
+
+DİLEKÇE ÖZETİ:
+DAVANIN KRONOLOJİSİ:
+EMSAL YARGITAY KARARLARI:
+DAVACININ ARGÜMANLARI:
+GÖZDEN KAÇAN ARGÜMANLAR:
+Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
+İşte analiz edilecek dava metni:
+""" + input_text
             
-            response = model.generate_content(prompt)
-            
+            # response = model.generate_content(prompt)
+            response = openai.ChatCompletion.create(
+                model="gpt-4o",  # veya "gpt-4" kullanabilirsiniz
+                messages=[
+                    {"role": "system", "content": "Sen bir hukuk asistanısın."},
+                    {"role": "user", "content": prompt}
+                ]
+            )
             # Yanıtı bölümlere ayır
-            sections = ['DİLEKÇE ÖZETİ', 'DAVANIN KRONOLOJİSİ', 'EMSAL YARGITAY KARARI', 'DİLEKÇE İÇERİĞİ', 'DAVACININ ARGÜMANLARI', 'GÖZDEN KAÇAN ARGÜMANLAR']
+            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:']
             result1 = {}
-            current_section = ''
-            for line in response.text.split('\n'):
+            current_section = None
+            content = ""
+
+            for line in response.choices[0].message['content'].split('\n'):  # OpenAI yanıtını işle
                 if any(section in line for section in sections):
+                    if current_section:
+                        result1[current_section] = content.strip()
+                        content = ""
                     current_section = next(section for section in sections if section in line)
-                    result1[current_section] = ''
                 elif current_section:
-                    result1[current_section] += line + '\n'
+                    content += line + "\n"
+            
+            if current_section:
+                result1[current_section] = content.strip()
 
             # Her bölümü Markdown'a çevir
             for section in result1:
-                result1[section] = markdown.markdown(result1[section])
+                if result1[section]:
+                    result1[section] = markdown.markdown(result1[section])
+                else:
+                    result1[section] = ""
             
             print("Result1:", result1)  # Debug için
         

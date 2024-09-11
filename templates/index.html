@@ -19,10 +19,9 @@
     </header>
     <div class="container">
         <div id="tabs" class="tabs" style="display: none;">
-            <button class="tab-button active" data-tab="ozet">Dilekçe Özeti</button>
+            <button class="tab-button" data-tab="ozet">Dilekçe Özeti</button>
             <button class="tab-button" data-tab="kronoloji">Davanın Kronolojisi</button>
             <button class="tab-button" data-tab="emsal">Emsal Yargıtay Kararları</button>
-            <button class="tab-button" data-tab="icerik">Dilekçe İçeriği</button>
             <button class="tab-button" data-tab="argumanlar">Davacının Argümanları</button>
             <button class="tab-button" data-tab="gozden-kacan">Gözden Kaçan Argümanlar</button>
         </div>
@@ -52,12 +51,11 @@
         </div> <!-- Yüklenme animasyonu -->        
         <div class="result-container">
             {% if result1 %}
-                <div id="ozet" class="tab-content active">{{ result1.get('DİLEKÇE ÖZETİ', '') | safe }}</div>
-                <div id="kronoloji" class="tab-content">{{ result1.get('DAVANIN KRONOLOJİSİ', '') | safe }}</div>
-                <div id="emsal" class="tab-content">{{ result1.get('EMSAL YARGITAY KARARI', '') | safe }}</div>
-                <div id="icerik" class="tab-content">{{ result1.get('DİLEKÇE İÇERİĞİ', '') | safe }}</div>
-                <div id="argumanlar" class="tab-content">{{ result1.get('DAVACININ ARGÜMANLARI', '') | safe }}</div>
-                <div id="gozden-kacan" class="tab-content">{{ result1.get('GÖZDEN KAÇAN ARGÜMANLAR', '') | safe }}</div>
+                <div id="ozet" class="tab-content active">{{ result1.get('DİLEKÇE ÖZETİ:', '') | safe }}</div>
+                <div id="kronoloji" class="tab-content">{{ result1.get('DAVANIN KRONOLOJİSİ:', '') | safe }}</div>
+                <div id="emsal" class="tab-content">{{ result1.get('EMSAL YARGITAY KARARLARI:', '') | safe }}</div>
+                <div id="argumanlar" class="tab-content">{{ result1.get('DAVACININ ARGÜMANLARI:', '') | safe }}</div>
+                <div id="gozden-kacan" class="tab-content">{{ result1.get('GÖZDEN KAÇAN ARGÜMANLAR:', '') | safe }}</div>
             {% endif %}
         </div>
     </div>
