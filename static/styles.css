@@ -215,9 +215,7 @@ result-container::-webkit-scrollbar-thumb:hover {
     align-items: center;
     margin: 5px 0 10px 50px;
     padding: 10px;
-    background-color: #fff;
-    border: 0.5px solid #efefef;
-    border-radius: 10px;
+
 }
 
 .file-info .file-icon {
@@ -228,6 +226,26 @@ result-container::-webkit-scrollbar-thumb:hover {
 
 .file-info .file-name {
     
+    font-size: 16px;
+    color: #333;
+}
+.file-box {
+    display: flex;
+    align-items: center;
+    margin: 5px;
+    padding: 10px;
+    background-color: #fff;
+    border: 0.5px solid #efefef;
+    border-radius: 10px;
+}
+
+.file-box .file-icon {
+    width: 25px;
+    height: 25px;
+    margin-right: 10px;
+}
+
+.file-box .file-name {
     font-size: 16px;
     color: #333;
 }
@@ -292,4 +310,17 @@ result-container::-webkit-scrollbar-thumb:hover {
 
 .result-container {
     margin-top: 20px;
+}
+
+.message {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.message.info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
 }

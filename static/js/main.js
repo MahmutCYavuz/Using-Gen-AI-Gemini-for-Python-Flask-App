@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     const inputText = document.getElementById('input_text');
     const submitButton = document.querySelector('.submit-button');
-    const form = document.querySelector('.form');
+    const form = document.getElementById('analysis-form');
     const loadingAnimation = document.getElementById('loading-animation');
     const resultContainer = document.querySelector('.result-container');
     const fileInput = document.getElementById('file-input');
@@ -45,7 +45,29 @@ document.addEventListener('DOMContentLoaded', function() {
             loadingAnimation.style.display = 'block';
             resultContainer.style.display = 'none';
             tabs.style.display = 'none';
-            form.submit();
+            
+            // Form verilerini al
+            const formData = new FormData(form);
+            
+            // AJAX ile formu gönder
+            fetch('/', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                // Sayfayı yenile, ama geçmişi değiştirmeden
+                document.open();
+                document.write(html);
+                document.close();
+                
+                // Yükleme animasyonunu gizle
+                loadingAnimation.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loadingAnimation.style.display = 'none';
+            });
         }
     });
     
@@ -53,27 +75,37 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             if (!submitButton.hasAttribute('disabled')) {
-                loadingAnimation.style.display = 'block';
-                resultContainer.style.display = 'none';
-                tabs.style.display = 'none';
-                form.submit();
+                submitButton.click(); // Submit butonuna tıklama işlemini tetikle
             }
         }
     });
     
     fileInput.addEventListener('change', () => {
+        fileInfo.innerHTML = ''; // Önceki dosya bilgilerini temizle
         if (fileInput.files.length > 0) {
-            const file = fileInput.files[0];
-            fileName.textContent = file.name;
+            Array.from(fileInput.files).forEach(file => {
+                const fileType = file.type;
+                const fileBox = document.createElement('div');
+                fileBox.classList.add('file-box');
     
-            const fileType = file.type;
-            if (fileType === 'application/pdf') {
-                fileIcon.src = "/static/image/pdf_icon.png";
-            } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
-                fileIcon.src = "/static/image/word_icon.png";
-            } else {
-                fileIcon.src = "/static/image/file_icon.png";
-            }
+                const icon = document.createElement('img');
+                if (fileType === 'application/pdf') {
+                    icon.src = "/static/image/pdf_icon.png";
+                } else if (fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || fileType === 'application/msword') {
+                    icon.src = "/static/image/word_icon.png";
+                } else {
+                    icon.src = "/static/image/file_icon.png";
+                }
+                icon.classList.add('file-icon');
+    
+                const name = document.createElement('span');
+                name.textContent = file.name;
+                name.classList.add('file-name');
+    
+                fileBox.appendChild(icon);
+                fileBox.appendChild(name);
+                fileInfo.appendChild(fileBox);
+            });
     
             fileInfo.style.display = 'flex';
         } else {

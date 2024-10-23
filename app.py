@@ -1,7 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import markdown
-import google.generativeai as genai
 import openai 
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
@@ -9,6 +8,7 @@ import docx
 from PyPDF2 import PdfReader
 import re
 from transformers import pipeline
+
 
 # Çevresel değişkenleri yükle
 load_dotenv()
@@ -150,140 +150,84 @@ def redact_sensitive_info(text):
     return text
 
 
-# Hugging Face'den Türkçe NER modeli yükleniyor
-# ner_model = pipeline("ner", model="savasy/bert-base-turkish-ner-cased", aggregation_strategy="simple")
 
-# def redact_sensitive_info(text):
-#     # NER modeli ile isim ve soyisimleri bul
-#     entities = ner_model(text)
-
-#     # Bulunan isim ve soyisimleri ayrı ayrı ve birlikte topla
-#     names = set()
-#     full_names = set()
-
-#     for entity in entities:
-#         if entity['entity_group'] == 'PER':
-#             names.add(entity['word'])
-#             full_names.add(entity['word'])
-
-#     # İsim ve soyisimleri birlikte ve ayrı ayrı maskele
-#     for full_name in full_names:
-#         # Tam ismi maskele
-#         pattern = re.compile(rf'\b{full_name}(\w*)\b', re.IGNORECASE)
-#         text = pattern.sub(lambda m: '****' + m.group(1), text)
-
-#         # İsim ve soyisimleri ayrı ayrı maskele
-#         for name in full_name.split():
-#             pattern = re.compile(rf'\b{name}(\w*)\b', re.IGNORECASE)
-#             text = pattern.sub(lambda m: '****' + m.group(1), text)
-
-    # # Kimlik numarasını tespit edip maskeleme
-    # id_pattern = r'\b\d{11}\b'
-    # text = re.sub(id_pattern, lambda m: '***********' if int(m.group()) % 2 == 0 else m.group(), text)
-
-    # # Telefon numaralarını tespit edip maskeleme (10 haneli numaralar)
-    # phone_pattern = r'\b\d{10}\b'
-    # text = re.sub(phone_pattern, '**********', text)
-
-    # # Adres tespit ve maskeleme
-    # address_pattern = r'\b\S+ (Sokak|Sk|Sok|Cadde|Cd|Mahalle|Mahallesi|Mah|Mh|Apartman|Apartmanı|Apt|Blok|No|Kapı|Daire|D|No)\b.*'
-    # text = re.sub(address_pattern, '**** adres ****', text)
-
-    # return text
-
-
-# def mask_sensitive_data(text):
-    # TCKN Maskeleme
-    masked_text = re.sub(r'\b(T?C?K?N?:?\s*)(\d{3})\d{6}(\d{2})\b', r'\1\2******\3', text)
-
-    # Telefon Numarası Maskeleme
-    masked_text = re.sub(r'\b(Tel:?\s*)(0?\d{3})\s*(\d{3})\s*(\d{2})\s*(\d{2})\b', r'\1\2 *** ** **', masked_text)
-    masked_text = re.sub(r'\b(\d{1,4})\s*(\d{3})\s*(\d{2})\s*(\d{2})\b', r'\1 *** ** **', masked_text)
-
-    # VKN Maskeleme
-    masked_text = re.sub(r'\b(V?K?N?:?\s*)(\d{3})\d{5}(\d{2})\b', r'\1\2*****\3', masked_text)
-
-    # Adres Bilgisi Maskeleme
-    masked_text = re.sub(r'(No:)\s*\d+(/\d+)?', r'\1 **', masked_text)
-    masked_text = re.sub(r'(Daire:)\s*\d+', r'\1 **', masked_text)
-    masked_text = re.sub(r'(Kat:)\s*\d+', r'\1 **', masked_text)
-
-    # İsim Maskeleme (Avukatlar ve diğer özel isimler için)
-    def mask_name(match):
-        prefix = match.group(1) if match.group(1) else ""
-        first_name = match.group(2)
-        last_name = match.group(3)
-        return f"{prefix}{first_name[0]}{'*' * (len(first_name) - 1)} {last_name[0]}{'*' * (len(last_name) - 1)}"
-
-    masked_text = re.sub(r'\b(Av\.|Avukat\s+)?([A-ZÇĞİÖŞÜ][a-zçğıöşü]+)\s+([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)\b', mask_name, masked_text)
-
-    # Şirket İsmi Maskeleme
-    sirket_turleri = r'(A\.Ş\.|LTD\.\s*ŞTİ\.|Limited Şirketi|Anonim Şirketi)'
-    masked_text = re.sub(rf'\b([A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)(\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)*\s+{sirket_turleri}\b', 
-                         lambda m: m.group(1) + ' ' + '*' * len(m.group(0).split(m.group(1))[1].split(m.group(-1))[0]) + m.group(-1), 
-                         masked_text)
-
-    # E-mail Maskeleme
-    masked_text = re.sub(r'\b([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})\b', 
-                         lambda m: f"{m.group(1)[0]}{'*' * (len(m.group(1)) - 1)}@{m.group(2)}", 
-                         masked_text)
-
-    return masked_text
 
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     result1 = {}
+    message = None
     
     if request.method == 'POST':
-        input_text = request.form.get('input_text', '').strip()
-        file = request.files.get('file')
-        
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-            
-            if filename.rsplit('.', 1)[1].lower() == 'pdf':
-                file_content = extract_text_from_pdf(file_path)
-            elif filename.rsplit('.', 1)[1].lower() == 'docx':
-                file_content = extract_text_from_docx(file_path)
-            
-            input_text = file_content + "\n\n" + input_text
-        
-        if not input_text:
-            return "Geçersiz istek: Metin veya dosya gerekli", 400
-        input_text = redact_sensitive_info(input_text)
-        print(input_text)        
-        # model = genai.GenerativeModel('gemini-pro')
-        try:
-            prompt = """
-            Aşağıdaki dava metnini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde 'DİLEKÇE ÖZETİ:' başlığı altında,
-            Davanın Kronolojik sıralamasını ve olayları 'DAVANIN KRONOLOJİSİ:' başlığı altında,
-            Davaya ilişkin geçmiş emsal yargıtay kararlarınıN url'sini internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
-            Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
-            Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında yaz.
-            Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
+        input_text1 = ""
+        input_text2 = ""
+        files = request.files.getlist('file')  # Birden fazla dosya al
+
+        if len(files) > 0:
+            file1 = files[0]
+            if file1 and allowed_file(file1.filename):
+                filename1 = secure_filename(file1.filename)
+                file_path1 = os.path.join(app.config['UPLOAD_FOLDER'], filename1)
+                file1.save(file_path1)
+                
+                if filename1.rsplit('.', 1)[1].lower() == 'pdf':
+                    input_text1 = extract_text_from_pdf(file_path1)
+                elif filename1.rsplit('.', 1)[1].lower() == 'docx':
+                    input_text1 = extract_text_from_docx(file_path1)
+
+                # Metni temizle ve konsola yazdır
+                input_text1 = redact_sensitive_info(input_text1)
+                print("Dosya 1 İçeriği (Redacted):", input_text1)
+
+        if len(files) > 1:
+            file2 = files[1]
+            if file2 and allowed_file(file2.filename):
+                filename2 = secure_filename(file2.filename)
+                file_path2 = os.path.join(app.config['UPLOAD_FOLDER'], filename2)
+                file2.save(file_path2)
+                
+                if filename2.rsplit('.', 1)[1].lower() == 'pdf':
+                    input_text2 = extract_text_from_pdf(file_path2)
+                elif filename2.rsplit('.', 1)[1].lower() == 'docx':
+                    input_text2 = extract_text_from_docx(file_path2)
+
+                # Metni temizle ve konsola yazdır
+                input_text2 = redact_sensitive_info(input_text2)
+                print("Dosya 2 İçeriği (Redacted):", input_text2)
+
+        # Prompt oluştur
+        prompt = """
+        Aşağıdaki dava metinlerini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
+        Davanın Kronolojik sıralamasını ve olayları tarihleriyle birlikte gg/aa/yyyy şeklinde 'DAVANIN KRONOLOJİSİ:' başlığı altında,
+        Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
+        Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
+        Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
+        Metinde 'Dosya 2 İçeriği (Redacted)' kelimesini görürsen eğer Poliçe ile Dava Metnini karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz
+
+        Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
 
 DİLEKÇE ÖZETİ:
 DAVANIN KRONOLOJİSİ:
 EMSAL YARGITAY KARARLARI:
 DAVACININ ARGÜMANLARI:
 GÖZDEN KAÇAN ARGÜMANLAR:
+POLİÇE KARŞILAŞTIRMASI:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
-İşte analiz edilecek dava metni:
-""" + input_text
-            
-            # response = model.generate_content(prompt)
+İşte analiz edilecek dava metinleri:
+Metin 1:
+""" + input_text1 + "\n\nMetin 2:\n" + input_text2
+
+        # OpenAI API çağrısı
+        try:
             response = openai.ChatCompletion.create(
                 model="gpt-4o",  # veya "gpt-4" kullanabilirsiniz
                 messages=[
-                    {"role": "system", "content": "Sen bir hukuk asistanısın."},
+                    {"role": "system", "content": ""},
                     {"role": "user", "content": prompt}
-                ]
+                ]   
             )
             # Yanıtı bölümlere ayır
-            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:']
+            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:','POLİÇE KARŞILAŞTIRMASI:']
             result1 = {}
             current_section = None
             content = ""
@@ -312,9 +256,9 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
         except Exception as e:
             result1 = {"Hata": f"Hata oluştu: {e}"}
         
-        return render_template('index.html', result1=result1)
+        return render_template('index.html', result1=result1, message=message)
     
-    return render_template('index.html', result1=None)
+    return render_template('index.html', result1=None, message=None)
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
