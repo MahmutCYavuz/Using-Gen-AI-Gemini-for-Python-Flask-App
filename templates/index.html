@@ -29,7 +29,7 @@
             <button class="tab-button" data-tab="emsal">Emsal Yargıtay Kararları</button>
             <button class="tab-button" data-tab="argumanlar">Davacının Argümanları</button>
             <button class="tab-button" data-tab="gozden-kacan">Gözden Kaçan Argümanlar</button>
-            <button class="tab-button" data-tab="gozden-kacan">Poliçe Karşılaştırması</button>
+            <button class="tab-button" data-tab="police-karsilastirma">Poliçe Karşılaştırması</button>
         </div>
         <form id="analysis-form" method="post" class="form" enctype="multipart/form-data">
             <div class="textarea-container">
@@ -62,6 +62,7 @@
                 <div id="emsal" class="tab-content">{{ result1.get('EMSAL YARGITAY KARARLARI:', '') | safe }}</div>
                 <div id="argumanlar" class="tab-content">{{ result1.get('DAVACININ ARGÜMANLARI:', '') | safe }}</div>
                 <div id="gozden-kacan" class="tab-content">{{ result1.get('GÖZDEN KAÇAN ARGÜMANLAR:', '') | safe }}</div>
+                <div id="police-karsilastirma" class="tab-content">{{ result1.get('POLİÇE KARŞILAŞTIRMASI:', '') | safe }}</div>
             {% endif %}
         </div>
     </div>

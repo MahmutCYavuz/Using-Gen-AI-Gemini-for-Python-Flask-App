@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session
 import markdown
-import openai 
+from openai import OpenAI
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 import docx
@@ -13,11 +13,13 @@ from transformers import pipeline
 # Çevresel değişkenleri yükle
 load_dotenv()
 
-# genai.configure(api_key=os.getenv('API_KEY'))
-openai.api_key = os.getenv('OPENAI_API_KEY')  # Bu satırı ekleyin
-
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Gizli anahtar .env dosyasından alınır
+
+# OpenAI istemcisini oluştur
+client = OpenAI(
+    api_key=os.getenv('OPENAI_API_KEY')
+)
 
 UPLOAD_FOLDER = 'uploads'
 ALLOWED_EXTENSIONS = {'pdf', 'docx'}
@@ -43,6 +45,28 @@ def extract_text_from_pdf(file_path):
 def extract_text_from_docx(file_path):
     doc = docx.Document(file_path)
     return "\n".join([para.text for para in doc.paragraphs])
+def extract_text_from_files(files):
+    input_text1 = ""
+    input_text2 = ""
+    for i, file in enumerate(files):
+        filename = secure_filename(file.filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        file.save(file_path)
+
+        if filename.endswith('.pdf'):
+            text = extract_text_from_pdf(file_path)
+        elif filename.endswith('.docx'):
+            text = extract_text_from_docx(file_path)
+        else:
+            continue
+
+        # İlk dosya input_text1'e, ikinci dosya input_text2'ye atanır
+        if i == 0:
+            input_text1 += text
+        elif i == 1:
+            input_text2 += text
+
+    return input_text1, input_text2
 
 # Load the Turkish NER model from Hugging Face
 
@@ -153,56 +177,42 @@ def redact_sensitive_info(text):
 
 
 
+
 @app.route("/", methods=["GET", "POST"])
 def index():
     result1 = {}
     message = None
     
     if request.method == 'POST':
-        input_text1 = ""
+        # Metin girişi
+        input_text1 = request.form.get('text_input', '').strip()
         input_text2 = ""
-        files = request.files.getlist('file')  # Birden fazla dosya al
 
-        if len(files) > 0:
-            file1 = files[0]
-            if file1 and allowed_file(file1.filename):
-                filename1 = secure_filename(file1.filename)
-                file_path1 = os.path.join(app.config['UPLOAD_FOLDER'], filename1)
-                file1.save(file_path1)
-                
-                if filename1.rsplit('.', 1)[1].lower() == 'pdf':
-                    input_text1 = extract_text_from_pdf(file_path1)
-                elif filename1.rsplit('.', 1)[1].lower() == 'docx':
-                    input_text1 = extract_text_from_docx(file_path1)
+        # Dosya yükleme
+        files = request.files.getlist('file')
+        if files and files[0].filename != '':
+            input_text1, input_text2 = extract_text_from_files(files)
 
-                # Metni temizle ve konsola yazdır
-                input_text1 = redact_sensitive_info(input_text1)
-                print("Dosya 1 İçeriği (Redacted):", input_text1)
+        # Eğer sadece metin girildiyse, input_text2'yi boş bırak
+        if input_text1 and not input_text2:
+            input_text2 = ""
 
-        if len(files) > 1:
-            file2 = files[1]
-            if file2 and allowed_file(file2.filename):
-                filename2 = secure_filename(file2.filename)
-                file_path2 = os.path.join(app.config['UPLOAD_FOLDER'], filename2)
-                file2.save(file_path2)
-                
-                if filename2.rsplit('.', 1)[1].lower() == 'pdf':
-                    input_text2 = extract_text_from_pdf(file_path2)
-                elif filename2.rsplit('.', 1)[1].lower() == 'docx':
-                    input_text2 = extract_text_from_docx(file_path2)
+        # Metinleri maskele
+        masked_text1 = redact_sensitive_info(input_text1)
+        masked_text2 = redact_sensitive_info(input_text2)
 
-                # Metni temizle ve konsola yazdır
-                input_text2 = redact_sensitive_info(input_text2)
-                print("Dosya 2 İçeriği (Redacted):", input_text2)
+        # Debug: Maskeleme sonrası metinleri yazdır
+        print("Masked Metin 1:", masked_text1)  # Debug için
+        print("Masked Metin 2:", masked_text2)  # Debug için
 
         # Prompt oluştur
-        prompt = """
+        prompt = f"""
         Aşağıdaki dava metinlerini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
         Davanın Kronolojik sıralamasını ve olayları tarihleriyle birlikte gg/aa/yyyy şeklinde 'DAVANIN KRONOLOJİSİ:' başlığı altında,
         Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
         Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
         Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
-        Metinde 'Dosya 2 İçeriği (Redacted)' kelimesini görürsen eğer Poliçe ile Dava Metnini karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz
+        Metinde 'Metin 2:' kelimesini görürsen eğer Poliçe ile Dava Metnini detaylıca karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz
 
         Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
 
@@ -215,24 +225,32 @@ POLİÇE KARŞILAŞTIRMASI:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
 İşte analiz edilecek dava metinleri:
 Metin 1:
-""" + input_text1 + "\n\nMetin 2:\n" + input_text2
+{masked_text1}
 
+Metin 2:
+{masked_text2}
+"""
         # OpenAI API çağrısı
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-4o",  # veya "gpt-4" kullanabilirsiniz
+            print("API çağrısı yapılıyor...")  # Debug için
+            response = client.chat.completions.create(
+                model="gpt-4",  # veya "gpt-4o" kullanabilirsiniz
                 messages=[
-                    {"role": "system", "content": ""},
+                    {"role": "system", "content": "Sen yardımsever bir hukukçu asistanısın ve metni analiz edip bana yardımcı olacaksın."},
                     {"role": "user", "content": prompt}
-                ]   
+                ],
+                max_tokens=1500
             )
+            print("API yanıtı alındı.")  # Debug için
+            print("Yanıt içeriği:", response.choices[0].message.content)  # Debug için
+
             # Yanıtı bölümlere ayır
             sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:','POLİÇE KARŞILAŞTIRMASI:']
             result1 = {}
             current_section = None
             content = ""
 
-            for line in response.choices[0].message['content'].split('\n'):  # OpenAI yanıtını işle
+            for line in response.choices[0].message.content.split('\n'):  # OpenAI yanıtını işle
                 if any(section in line for section in sections):
                     if current_section:
                         result1[current_section] = content.strip()
@@ -240,9 +258,9 @@ Metin 1:
                     current_section = next(section for section in sections if section in line)
                 elif current_section:
                     content += line + "\n"
-            
+
             if current_section:
-                result1[current_section] = content.strip()
+                result1[current_section] = content.strip() if content.strip() else "Yeterli bilgi bulunmamaktadır!"
 
             # Her bölümü Markdown'a çevir
             for section in result1:
@@ -254,6 +272,7 @@ Metin 1:
             print("Result1:", result1)  # Debug için
         
         except Exception as e:
+            print("API çağrısı sırasında hata oluştu:", e)  # Debug için
             result1 = {"Hata": f"Hata oluştu: {e}"}
         
         return render_template('index.html', result1=result1, message=message)
@@ -262,4 +281,3 @@ Metin 1:
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-

@@ -124,17 +124,18 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Tab işlevselliği
-    tabButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            const tabId = button.getAttribute('data-tab');
-            
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            button.classList.add('active');
-            document.getElementById(tabId).classList.add('active');
-        });
+    // Tab işlevselliği
+tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+        const tabId = button.getAttribute('data-tab');
+        
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(content => content.classList.remove('active'));
+        
+        button.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
     });
+});
 
     // Sonuç geldiğinde sekmeleri göster
     if (resultContainer.innerHTML.trim() !== '') {
