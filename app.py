@@ -68,114 +68,57 @@ def extract_text_from_files(files):
 
     return input_text1, input_text2
 
-# Load the Turkish NER model from Hugging Face
-
+# NER modeli yükleme
 ner_model = pipeline("ner", model="savasy/bert-base-turkish-ner-cased", aggregation_strategy="simple")
 
-# PDF metnini temizleme ve normalize etme
+# Metni temizleme ve normalize etme fonksiyonu
 def clean_text(text):
-    # Birden fazla boşluğu tek bir boşluk yap
-    text = re.sub(r'\s+', ' ', text)
-    # Gereksiz karakterleri kaldırma
-    text = re.sub(r'[^\w\s.,:]', '', text)
+    """
+    Metni normalize eder ve gereksiz karakterleri temizler.
+    """
+    text = re.sub(r'\s+', ' ', text)  # Birden fazla boşluk yerine tek bir boşluk koyar
+    text = re.sub(r'[^\w\s.,:]', '', text)  # Gereksiz karakterleri kaldırır
     return text
 
-
-# Function to mask sensitive data
+# Hassas verileri maskelemek için fonksiyon
 def redact_sensitive_info(text):
-    # Anahtar kelimelerden sonra gelen isimleri maskeleme fonksiyonu
-    def mask_after_keywords(match):
-        return f"{match.group(1)}: ********"
-
-    # 1. Kural: DAVACI, DAVALI, VEKİLİ, Av., HUKUK BÜROSU kelimelerinden sonra gelen isimler maskelenecek
-    text = re.sub(r'\b(DAVACI|DAVALI|VEKİLİ|Av\.|HUKUK BÜROSU)\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+\b', mask_after_keywords, text)
-    entities = ner_model(text)
-
-    # Bulunan isim ve soyisimleri ayrı ayrı ve birlikte topla
-    names = set()
-    full_names = set()
-
-    for entity in entities:
-        if entity['entity_group'] == 'PER':
-            names.add(entity['word'])
-            full_names.add(entity['word'])
-
-    # İsim ve soyisimleri birlikte ve ayrı ayrı maskele
-    for full_name in full_names:
-        # Tam ismi maskele
-        pattern = re.compile(rf'\b{full_name}(\w*)\b', re.IGNORECASE)
-        text = pattern.sub(lambda m: '****' + m.group(1), text)
-
-        # İsim ve soyisimleri ayrı ayrı maskele
-        for name in full_name.split():
-            pattern = re.compile(rf'\b{name}(\w*)\b', re.IGNORECASE)
-            text = pattern.sub(lambda m: '****' + m.group(1), text)
-    # 2. Kural: Özel olarak "DAVACI:" ve "DAVALI:" ifadesinden sonra gelen isimler maskelenecek
-    # DAVACI ve DAVALI'dan sonra gelen isimleri doğru şekilde maskeleme
-    text = re.sub(r"(DAVACI|DAVALI)\s*:\s*[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)*", r"\1: ******** ******** **** **** **** **** **** ****** ******* ****************** ", text)
-    text = re.sub(r'(DAVACI|DAVALI|VEKİLİ|Av\.|HUKUK BÜROSU)\s*:\s*[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+)*', r'\1: ******** ******** **** ***** ****** **** *********** ', text)
-    text = re.sub(r'(DAVALI:\s*)(.*?)(\(VKN:\s*\d{10}\))', r'\1 ****** \3', text)
-    text = re.sub(r'(SAN\s+ve\s+TİC\.?\s+A\.Ş\.?|Ltd\.?\s+Şti\.?|A\.Ş\.?|Tic\.?|Şti\.?|SAN\.?)', '******', text)
-    text = re.sub(r'(\b[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+\s+(SAN\.?\s+ve\s+TİC\.?\s+A\.Ş\.?|Ltd\.?\s+Şti\.?|Şti\.?|A\.Ş\.?|Tic\.?))', '******', text)
-    text = re.sub(r'(DAVACI|DAVALI)\s*:\s*(.*?)(?=\s|$)', r'\1: ******** *********** ******* ******* ******* ****** ***** **** ***** *************************', text)
-     # DAVACI, DAVALI, VEKİLİ, Av., HUKUK BÜROSU kelimelerinden sonra gelen isimleri maskeleme
-
-
-    #text = re.sub(r"(DAVACI|DAVALI)\s*:\s*[A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+[A-ZÇĞİÖŞÜ][A-ZÇĞİÖŞÜa-zçğıöşü]+\b", r"\1: ******** ********", text)
-
-    # 3. Kural: Telefon numaralarını tespit edip maskeleme (10 haneli numaralar, boşluklu ve boşluksuz)
-    phone_pattern = r'\b(0\d{3})\s*\d{3}\s*\d{2}\s*\d{2}\b|\b(0\d{3})\d{7}\b'
-    text = re.sub(phone_pattern, r'\1 *** ** **', text)
-
-    # 4. Kural: Adres tespit ve maskeleme (adres ifadeleri: Sokak, Cadde, Mahalle, No vb.)
-    address_pattern = r'\b\S+\s+(Sokak|Sok|Cadde|Cad.|Cd.|Mh.|Mah.|Mahalle|Mahallesi|Apartman|Apartmanı|Blok|No|Kat|Daire|Daire:)\b.*'
-    text = re.sub(address_pattern, '**** adres ****', text)
-
-    # 5. Kural: Şirket isimlerini maskeleme (örnek: HİSTAŞ HİSAR İNŞ. TUR. SAN ve TİC. A.Ş.)
-    company_pattern = r'\b[A-ZÇĞİÖŞÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜ][a-zçğıöşü]+)+\s+(San\.|Tic\.|Ltd\.|A\.Ş\.|Şti\.)\b'
-    text = re.sub(company_pattern, '******** ********', text)
-
-    # 6. Kural: Mahkeme isimlerini maskeleme (örnek: Sulh Hukuk Mahkemesi)
-    court_pattern = r'\b([A-ZÇĞİÖŞÜÜ]+)\s+([A-ZÇĞİÖŞÜÜ]+)\s+\([A-ZÇĞİÖŞÜÜ]+\)\s+[HUKUK]\s+[MAHKEMESİ]\b'
-    text = re.sub(court_pattern, '******** ********', text)
-
-    # 7. Kural: Şehir ve ilçe isimlerini maskeleme (örnek: Beşiktaş/İst.)
-    
-    city_pattern = r'\b([A-ZÇĞİÖŞÜ][a-zçğıöşü]+)/([A-ZÇĞİÖŞÜ]+)\b'
-    text = re.sub(city_pattern, '********/********', text)
-
-    # 8. Kural: TCKN ve VKN numaralarını maskeleme
-    text = re.sub(r'TCKN:\s*\d{11}', 'TCKN: ***********', text)
-    text = re.sub(r'VKN:\s*\d{10}', 'VKN: **********', text)
-    
-    # mernis no
-
-    # 9. Kural: Doğum tarihlerini tespit edip maskeleme (dd/mm/yyyy veya dd-mm-yyyy formatında)
-    date_pattern = r'\b\d{2}[/-]\d{2}[/-]\d{4}\b'
-    text = re.sub(date_pattern, '****/****/****', text)
-
-    # 10. Kural: Dava esas ve karar numaralarını maskele (örn: 2022/1809 E.)
-    #text = re.sub(r'\b(\d{4}/\d{4,6}\s*(E|K))\b', '****/**** **', text)
-
-    # 11. Ekstra Pattern'ler:
-    # İsimler, adresler, davacı/davalı ve avukat bilgileri, mahkeme isimleri gibi bilgileri ekliyoruz
-    patterns = [
-        #r"\b[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+)*\b",  # İsimler
-        r"\b[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+(?:\s+[A-ZÇĞİÖŞÜÜ][a-zçğıöşü]+)*\s+(Mah\.|Cad\.|Sok\.)\s*\d+",  # Adresler
-        r"DAVACI:\s+(.*?)\s*(?=(DAVALI|Av\.))",  # Davacı ve tüm bilgileri (sonraki başlık bulunana kadar)
-        r"DAVALI:\s+(.*?)\s*(?=(VEKİLİ|$))",  # Davalı ve tüm bilgileri (sonraki başlık bulunana kadar)
-        r"Av\.\s+(.*?)\s*(?=\s|$)",  # Avukat ismi
-        r"([A-ZÇĞİÖŞÜÜ]+)\s+([A-ZÇĞİÖŞÜÜ]+)\s+\([A-ZÇĞİÖŞÜÜ]+\)\s+[HUKUK]\s+[MAHKEMESİ]",  # Mahkeme adı (daha genel)
+    """
+    Hassas bilgileri NER modeli ve regex ile maskeleyen fonksiyon.
+    """
+    # Regex ile maskeleme kuralları
+    MASKING_RULES = [
+        (r'\b(DAVACI|DAVALI|VEKİLİ|Av\.|HUKUK BÜROSU)\s+([A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s*){1,3}\b', r'\1: ********'),
+        (r'\b(0\d{3})[-\s]*\d{3}[-\s]*\d{2}[-\s]*\d{2}\b|\b(0\d{3})[-\s]*\d{7}\b', r'\1 *** ** **'),  # Telefon numaraları
+        (r'\b\S+\s+(Sokak|Sok|Cadde|Cd\.|Mh\.|Mah\.|Mahalle|Apartman|Blok|No|Kat|Daire)\b.*', '**** adres ****'),  # Adres
+        (r'\b([A-ZÇĞİÖŞÜ][a-zçğıöşü]+\s+){1,3}(San\.|Tic\.|Ltd\.|A\.Ş\.|Şti\.)\b', '******** ********'),  # Şirket isimleri
+        (r'\b(TCKN|T\.C\. Kimlik No):?\s*\d{11}\b', 'TCKN: ***********'),  # TCKN
+        (r'\b(VKN|Vergi No):?\s*\d{10}\b', 'VKN: **********'),  # VKN
+        (r'\b[A-ZÇĞİÖŞÜ]+(?:\s[A-ZÇĞİÖŞÜ]+)?/[A-ZÇĞİÖŞÜ]+(?:\s[A-ZÇĞİÖŞÜ]+)?\b', '********/********'),  # Şehir/ilçe isimleri
+        (r'\b[A-ZÇĞİÖŞÜ]+[\s][A-ZÇĞİÖŞÜ]+\s+\([A-ZÇĞİÖŞÜ]+\)\s+HUKUK\s+MAHKEMESİ\b', '******** Mahkemesi'),  # Mahkeme isimleri
+        (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '********@*****.***') # E-posta adreslerinin maskelenmesi
     ]
 
-    for pattern in patterns:
-        text = re.sub(pattern, '********', text)
+    # Regex ile metin maskeleme
+    for pattern, replacement in MASKING_RULES:
+        text = re.sub(pattern, replacement, text)
+
+    # NER modeli ile kişisel isim tespiti ve maskeleme
+    entities = ner_model(text)
+    for entity in entities:
+        if entity['entity_group'] == 'PER':
+            name = entity['word']
+            # İsimleri maskele
+            text = re.sub(rf'\b{re.escape(name)}\b', '********', text, flags=re.IGNORECASE)
+     # Hassas kelimeleri maskele
+    sensitive_words = ['Neova Katılım Sigorta', 'Neova Katılım', 'Neova','AcnTurk', 'AKSigorta', 'Allianz', 'Anadolu', 'Arex', 'Atradius', 'Atlas', 'Aveon Global', 'Axa', 'Bereket', 'BNP Paribas Cardif', 'BUPA Acıbadem', 'CHUBB', 'Coface', 'Corpus', 'Doga', 'Emaa', 'Ethica', 'Euler Hermes', 'Eureko', 'Fiba', 'Generali', 'Global World', 'GRI', 'GIG', 'HDI', 'HDI Katılım', 'Hepiyi', 'Koru', 'Magdeburger', 'Mapfre', 'Medisa', 'Neova Katılım', 'Orient', 'Quick', 'Prive', 'Ray', 'Sompo', 'Şeker', 'Mellce', 'Turkcell Dijital', 'Türk Nippon', 'Türk P ve I', 'Türkiye Katılım', 'Unico', 'VHV Allgemeine', 'Zurich','Artun']
+    for word in sensitive_words:
+        # Kelime grubunu tam olarak eşleştir
+        text = re.sub(rf'\b{re.escape(word)}\b', '********', text, flags=re.IGNORECASE)
+
+    # Debug: Maskeleme sonrası metni yazdır
+    print("Maskeleme sonrası metin:", text)
 
     return text
-
-
-
-
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -185,7 +128,7 @@ def index():
     
     if request.method == 'POST':
         # Metin girişi
-        input_text1 = request.form.get('text_input', '').strip()
+        input_text1 = request.form.get('input_text', '').strip()
         input_text2 = ""
 
         # Dosya yükleme
@@ -202,8 +145,8 @@ def index():
         masked_text2 = redact_sensitive_info(input_text2)
 
         # Debug: Maskeleme sonrası metinleri yazdır
-        print("Masked Metin 1:", masked_text1)  # Debug için
-        print("Masked Metin 2:", masked_text2)  # Debug için
+        print("Masked Metin 1:", masked_text1)
+        print("Masked Metin 2:", masked_text2)
 
         # Prompt oluştur
         prompt = f"""
@@ -232,25 +175,25 @@ Metin 2:
 """
         # OpenAI API çağrısı
         try:
-            print("API çağrısı yapılıyor...")  # Debug için
+            print("API çağrısı yapılıyor...")
             response = client.chat.completions.create(
-                model="gpt-4",  # veya "gpt-4o" kullanabilirsiniz
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": "Sen yardımsever bir hukukçu asistanısın ve metni analiz edip bana yardımcı olacaksın."},
                     {"role": "user", "content": prompt}
                 ],
-                max_tokens=1500
+                max_tokens=4000
             )
-            print("API yanıtı alındı.")  # Debug için
-            print("Yanıt içeriği:", response.choices[0].message.content)  # Debug için
+            print("API yanıtı alındı.")
+            print("Yanıt içeriği:", response.choices[0].message.content)
 
             # Yanıtı bölümlere ayır
-            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:','POLİÇE KARŞILAŞTIRMASI:']
+            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:', 'POLİÇE KARŞILAŞTIRMASI:']
             result1 = {}
             current_section = None
             content = ""
 
-            for line in response.choices[0].message.content.split('\n'):  # OpenAI yanıtını işle
+            for line in response.choices[0].message.content.split('\n'):
                 if any(section in line for section in sections):
                     if current_section:
                         result1[current_section] = content.strip()
@@ -269,15 +212,14 @@ Metin 2:
                 else:
                     result1[section] = ""
             
-            print("Result1:", result1)  # Debug için
+            print("Result1:", result1)
         
         except Exception as e:
-            print("API çağrısı sırasında hata oluştu:", e)  # Debug için
+            print("API çağrısı sırasında hata oluştu:", e)
             result1 = {"Hata": f"Hata oluştu: {e}"}
         
         return render_template('index.html', result1=result1, message=message)
     
     return render_template('index.html', result1=None, message=None)
-
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
