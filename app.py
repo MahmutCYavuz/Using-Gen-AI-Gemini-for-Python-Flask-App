@@ -46,9 +46,8 @@ def extract_text_from_docx(file_path):
     doc = docx.Document(file_path)
     return "\n".join([para.text for para in doc.paragraphs])
 def extract_text_from_files(files):
-    input_text1 = ""
-    input_text2 = ""
-    for i, file in enumerate(files):
+    texts = []
+    for file in files:
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
@@ -60,13 +59,9 @@ def extract_text_from_files(files):
         else:
             continue
 
-        # İlk dosya input_text1'e, ikinci dosya input_text2'ye atanır
-        if i == 0:
-            input_text1 += text
-        elif i == 1:
-            input_text2 += text
+        texts.append(text)
 
-    return input_text1, input_text2
+    return texts
 
 # NER modeli yükleme
 ner_model = pipeline("ner", model="savasy/bert-base-turkish-ner-cased", aggregation_strategy="simple")
@@ -127,26 +122,17 @@ def index():
     message = None
     
     if request.method == 'POST':
-        # Metin girişi
-        input_text1 = request.form.get('input_text', '').strip()
-        input_text2 = ""
-
+        
         # Dosya yükleme
         files = request.files.getlist('file')
-        if files and files[0].filename != '':
-            input_text1, input_text2 = extract_text_from_files(files)
-
-        # Eğer sadece metin girildiyse, input_text2'yi boş bırak
-        if input_text1 and not input_text2:
-            input_text2 = ""
+        texts = extract_text_from_files(files)
 
         # Metinleri maskele
-        masked_text1 = redact_sensitive_info(input_text1)
-        masked_text2 = redact_sensitive_info(input_text2)
+        masked_texts = [redact_sensitive_info(text) for text in texts]
 
         # Debug: Maskeleme sonrası metinleri yazdır
-        print("Masked Metin 1:", masked_text1)
-        print("Masked Metin 2:", masked_text2)
+        for i, masked_text in enumerate(masked_texts):
+            print(f"Masked Metin {i+1}:", masked_text)
 
         # Prompt oluştur
         prompt = f"""
@@ -167,12 +153,8 @@ GÖZDEN KAÇAN ARGÜMANLAR:
 POLİÇE KARŞILAŞTIRMASI:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
 İşte analiz edilecek dava metinleri:
-Metin 1:
-{masked_text1}
+""" + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
 
-Metin 2:
-{masked_text2}
-"""
         # OpenAI API çağrısı
         try:
             print("API çağrısı yapılıyor...")

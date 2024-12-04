@@ -34,14 +34,20 @@
 }
 
 body {
-    background-color: #fff;
+    /* background-color: #fff; */
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-        
+    background-image: 
+    url('/static/image/Vector.svg'),
+    url('/static/image/Vector2.svg');
+ /* SVG dosya yolu */
+    background-size: contain, cover; /* Arka planı boyutlandırır */
+    background-position: left, left; /* Arka planı ortalar */
+    background-repeat: no-repeat, no-repeat; /* Tekrar etmeyi engeller */
 }
 
 header {
@@ -68,7 +74,7 @@ header .logo img {
     width: 80%;
     margin: 20px auto;
     padding: 20px;
-    background-color: #fff;
+    background-color: transparent;
     border-radius: 8px;
 }
 
@@ -160,7 +166,8 @@ header .logo img {
 
 .result-container {
     display: none; /* Başlangıçta gizli */
-    background-color: #fff;
+    background-color: transparent;
+    /* opacity: 0.5; */
     margin-top: 20px;
     padding: 10px;
     border: 1px solid #fff;
@@ -263,10 +270,10 @@ result-container::-webkit-scrollbar-thumb:hover {
 }
 
 .tab-button {
-    font-family: 'Pluto Sans Light', sans-serif;
+    font-family: 'Poppins', sans-serif;
     background-color: transparent;
     border: none;
-    border-radius: 50px;
+    border-radius: 10px;
     color: #1b7c60;
     padding: 10px 20px;
     cursor: pointer;
@@ -323,4 +330,34 @@ result-container::-webkit-scrollbar-thumb:hover {
     background-color: #d1ecf1;
     color: #0c5460;
     border: 1px solid #bee5eb;
+}
+
+.info-box {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #f8f9fa;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0px 7px 6px 0px rgb(38, 193, 151, 0.13);
+    z-index: 1000;
+    max-width: 400px;
+    text-align: center;
+}
+
+.info-box h2 {
+    margin-top: 0;
+    color: #1b7c60;
+}
+
+.info-box ul {
+    list-style-type: none;
+    padding: 0;
+
+}
+
+.info-box li {
+    margin-bottom: 10px;
 }

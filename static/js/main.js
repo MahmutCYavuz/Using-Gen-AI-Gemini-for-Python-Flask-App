@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const inputText = document.getElementById('input_text');
     const submitButton = document.querySelector('.submit-button');
     const form = document.getElementById('analysis-form');
+    const infoBox = document.getElementById('info-box');
     const loadingAnimation = document.getElementById('loading-animation');
     const resultContainer = document.querySelector('.result-container');
     const fileInput = document.getElementById('file-input');
@@ -16,9 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (inputText.value.trim().length > 0 || fileInput.files.length > 0) {
             submitButton.removeAttribute('disabled');
             submitButton.classList.add('active');
+            inputText.removeAttribute('disabled'); // Textarea'yı etkinleştir
         } else {
             submitButton.setAttribute('disabled', 'disabled');
             submitButton.classList.remove('active');
+            inputText.setAttribute('disabled', 'disabled'); // Textarea'yı devre dışı bırak
         }
     }
 
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!submitButton.hasAttribute('disabled')) {
+            infoBox.style.display = 'none';
             loadingAnimation.style.display = 'block';
             resultContainer.style.display = 'none';
             tabs.style.display = 'none';
@@ -63,6 +67,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Yükleme animasyonunu gizle
                 loadingAnimation.style.display = 'none';
+                infoBox.style.display = 'none';
+
             })
             .catch(error => {
                 console.error('Error:', error);
@@ -137,8 +143,9 @@ tabButtons.forEach(button => {
     });
 });
 
-    // Sonuç geldiğinde sekmeleri göster
+    // Sonuç geldiğinde sekmeleri göster ve bilgi kutusunu gizle
     if (resultContainer.innerHTML.trim() !== '') {
         tabs.style.display = 'flex';
+        infoBox.style.display = 'none';
     }
 });

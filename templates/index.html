@@ -14,9 +14,17 @@
             <div class="logo">
                 <img src="{{ url_for('static', filename='image/Neova-Sigorta_Logo.png') }}" alt="Neova Sigorta Logo">
             </div>
-            <h1 class="title">GEN AI Lawyer Simulation</h1>
+            <h1 class="title">NeoLawyer</h1>
         </div>
     </header>
+    <div id="info-box" class="info-box"><h2>NeoLawyer ile Hukuki İşlerinizi Kolaylaştırın!</h2>
+        <p><strong>Nasıl Kullanılır:</strong></p>
+        <ul>
+            <li><strong>Dosya Yükle:</strong> Dilekçeniz veya poliçenizi ister ayrı ayrı ister birlikte ekrandaki ataç işaretine tıklayarak sistemimize yükleyin.</li>
+            <li><strong>Sorunuzu Yazın:</strong> Yüklediğiniz dosya ile ilgili aklınıza takılan herhangi bir soru veya özel isteği metin alanına yazın.</li>
+            <li><strong>Analiz Et:</strong> Sistemimiz, yüklenen dosyayı ve sorunuzu analiz ederek size özel bir cevap sunacaktır.</li>
+        </ul>
+    </div>
     <div class="container">
         {% if message %}
         <div class="message {{ message.type }}">
@@ -41,7 +49,7 @@
                     <img id="file-icon" src="" alt="Dosya İkonu" class="file-icon">
                     <span id="file-name" class="file-name"></span>
                 </div>
-                <textarea id="input_text" name="input_text" placeholder="Dava Dilekçesi"></textarea>
+                <textarea id="input_text" name="input_text" placeholder="Sorunuzu yazabilirsiniz" disabled></textarea>
                 <button type="submit" class="submit-button" disabled>
                     <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
                 </button>
