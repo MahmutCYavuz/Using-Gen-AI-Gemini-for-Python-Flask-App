@@ -130,9 +130,12 @@ def index():
         # Metinleri maskele
         masked_texts = [redact_sensitive_info(text) for text in texts]
 
+        # Kullanıcıdan gelen metin
+        user_input = request.form.get('input_text', '').strip()
+
         # Debug: Maskeleme sonrası metinleri yazdır
-        for i, masked_text in enumerate(masked_texts):
-            print(f"Masked Metin {i+1}:", masked_text)
+        # for i, masked_text in enumerate(masked_texts):
+            # print(f"Masked Metin {i+1}:", masked_text)
 
         # Prompt oluştur
         prompt = f"""
@@ -141,27 +144,32 @@ def index():
         Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
         Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
         Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
-        Metinde 'Metin 2:' kelimesini görürsen eğer Poliçe ile Dava Metnini detaylıca karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz
+        Metinde 'Metin 2:' kelimesini görürsen eğer Poliçe ile Dava Metnini detaylıca karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz,
+        'Kullanıcı Sorusu'nun cevabını metni doğru bir şekilde analiz ederek soruyu ve cevabını 'KULLANICI SORUSU:' başlığı altında yaz.
 
         Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
-
+        
 DİLEKÇE ÖZETİ:
 DAVANIN KRONOLOJİSİ:
 EMSAL YARGITAY KARARLARI:
 DAVACININ ARGÜMANLARI:
 GÖZDEN KAÇAN ARGÜMANLAR:
 POLİÇE KARŞILAŞTIRMASI:
+KULLANICI SORUSU:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
 İşte analiz edilecek dava metinleri:
 """ + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
-
+        # Kullanıcıdan gelen metni prompt'a ekle
+        if user_input:
+            prompt += f"\n\nKullanıcı Sorusu:\n{user_input}"
+            print('Promt:',prompt)
         # OpenAI API çağrısı
         try:
             print("API çağrısı yapılıyor...")
             response = client.chat.completions.create(
                 model="gpt-4o",
                 messages=[
-                    {"role": "system", "content": "Sen yardımsever bir hukukçu asistanısın ve metni analiz edip bana yardımcı olacaksın."},
+                    {"role": "system", "content": "Sen Türkiye Cumhuriyeti Hukukundan son derece iyi anlayan zeki bir yardımcısın."},
                     {"role": "user", "content": prompt}
                 ],
                 max_tokens=4000
@@ -170,7 +178,7 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
             print("Yanıt içeriği:", response.choices[0].message.content)
 
             # Yanıtı bölümlere ayır
-            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:', 'POLİÇE KARŞILAŞTIRMASI:']
+            sections = ['DİLEKÇE ÖZETİ:', 'DAVANIN KRONOLOJİSİ:', 'EMSAL YARGITAY KARARLARI:', 'DAVACININ ARGÜMANLARI:', 'GÖZDEN KAÇAN ARGÜMANLAR:', 'POLİÇE KARŞILAŞTIRMASI:','KULLANICI SORUSU:']
             result1 = {}
             current_section = None
             content = ""
@@ -194,7 +202,7 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
                 else:
                     result1[section] = ""
             
-            print("Result1:", result1)
+            # print("Result1:", result1)
         
         except Exception as e:
             print("API çağrısı sırasında hata oluştu:", e)

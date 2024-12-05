@@ -38,6 +38,8 @@
             <button class="tab-button" data-tab="argumanlar">Davacının Argümanları</button>
             <button class="tab-button" data-tab="gozden-kacan">Gözden Kaçan Argümanlar</button>
             <button class="tab-button" data-tab="police-karsilastirma">Poliçe Karşılaştırması</button>
+            <button class="tab-button" data-tab="kullanici-sorusu">Kullanıcı Sorusu</button>
+
         </div>
         <form id="analysis-form" method="post" class="form" enctype="multipart/form-data">
             <div class="textarea-container">
@@ -49,7 +51,7 @@
                     <img id="file-icon" src="" alt="Dosya İkonu" class="file-icon">
                     <span id="file-name" class="file-name"></span>
                 </div>
-                <textarea id="input_text" name="input_text" placeholder="Sorunuzu yazabilirsiniz" disabled></textarea>
+                <textarea id="input_text" name="input_text" placeholder="Dosyanızı yükledikten sonra sorunuzu yazabilirsiniz 😊" disabled></textarea>
                 <button type="submit" class="submit-button" disabled>
                     <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
                 </button>
@@ -71,6 +73,7 @@
                 <div id="argumanlar" class="tab-content">{{ result1.get('DAVACININ ARGÜMANLARI:', '') | safe }}</div>
                 <div id="gozden-kacan" class="tab-content">{{ result1.get('GÖZDEN KAÇAN ARGÜMANLAR:', '') | safe }}</div>
                 <div id="police-karsilastirma" class="tab-content">{{ result1.get('POLİÇE KARŞILAŞTIRMASI:', '') | safe }}</div>
+                <div id="kullanici-sorusu" class="tab-content">{{ result1.get('KULLANICI SORUSU:', '') | safe }}</div>
             {% endif %}
         </div>
     </div>
