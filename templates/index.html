@@ -20,8 +20,11 @@
     <div id="info-box" class="info-box"><h2>NeoLawyer ile Hukuki İşlerinizi Kolaylaştırın!</h2>
         <p><strong>Nasıl Kullanılır:</strong></p>
         <ul>
-            <li><strong>Dosya Yükle:</strong> Dilekçeniz veya poliçenizi ister ayrı ayrı ister birlikte ekrandaki ataç işaretine tıklayarak sistemimize yükleyin.</li>
-            <li><strong>Sorunuzu Yazın:</strong> Yüklediğiniz dosya ile ilgili aklınıza takılan herhangi bir soru veya özel isteği metin alanına yazın.</li>
+            <li><strong>Dosya Yükle:</strong> Dilekçeniz veya poliçenizi ister ayrı ayrı ister birlikte ekrandaki 
+                <img src="{{ url_for('static', filename='image/upload_icon.svg') }}" alt="Yükle" style="width: 16px; height: 16px; vertical-align: middle;">
+                işaretine tıklayarak sistemimize yükleyebilirsiniz.
+            </li>
+            <li><strong>Sorunuzu Yazın:</strong> Yüklediğiniz dosya ile ilgili aklınıza takılan herhangi bir soru veya özel isteği dosyanızı yükledikten sonra metin alanına yazabilirsiniz.</li>
             <li><strong>Analiz Et:</strong> Sistemimiz, yüklenen dosyayı ve sorunuzu analiz ederek size özel bir cevap sunacaktır.</li>
         </ul>
     </div>
@@ -38,9 +41,10 @@
             <button class="tab-button" data-tab="argumanlar">Davacının Argümanları</button>
             <button class="tab-button" data-tab="gozden-kacan">Gözden Kaçan Argümanlar</button>
             <button class="tab-button" data-tab="police-karsilastirma">Poliçe Karşılaştırması</button>
-            <button class="tab-button" data-tab="kullanici-sorusu">Kullanıcı Sorusu</button>
-
+            <button class="tab-button kullanici-sorusu-tab" data-tab="kullanici-sorusu">Kullanıcı Sorusu</button>
         </div>
+
+        
         <form id="analysis-form" method="post" class="form" enctype="multipart/form-data">
             <div class="textarea-container">
                 <label for="file-input" class="file-upload-icon">

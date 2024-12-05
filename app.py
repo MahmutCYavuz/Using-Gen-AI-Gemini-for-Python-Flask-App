@@ -133,19 +133,15 @@ def index():
         # Kullanıcıdan gelen metin
         user_input = request.form.get('input_text', '').strip()
 
-        # Debug: Maskeleme sonrası metinleri yazdır
-        # for i, masked_text in enumerate(masked_texts):
-            # print(f"Masked Metin {i+1}:", masked_text)
-
-        # Prompt oluştur
-        prompt = f"""
-        Aşağıdaki dava metinlerini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
+        if len(masked_texts)>1:
+                prompt=f"""
+        Sana yollanan metinlerden biri poliçe metni biri dava dilekçesi metni. Bu metinleri analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
         Davanın Kronolojik sıralamasını ve olayları tarihleriyle birlikte gg/aa/yyyy şeklinde 'DAVANIN KRONOLOJİSİ:' başlığı altında,
         Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
         Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
-        Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
-        Metinde 'Metin 2:' kelimesini görürsen eğer Poliçe ile Dava Metnini detaylıca karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz,
-        'Kullanıcı Sorusu'nun cevabını metni doğru bir şekilde analiz ederek soruyu ve cevabını 'KULLANICI SORUSU:' başlığı altında yaz.
+        Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında yaz,
+        Dava metninin içerisinde bulunan ancak poliçeyi kapsamayan bilgileri gösterip 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında,
+        'Kullanıcı Sorusu'nun cevabını metni doğru bir şekilde analiz ederek soruyu ve cevabını 'KULLANICI SORUSU:' başlığı altında,
 
         Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
         
@@ -156,9 +152,57 @@ DAVACININ ARGÜMANLARI:
 GÖZDEN KAÇAN ARGÜMANLAR:
 POLİÇE KARŞILAŞTIRMASI:
 KULLANICI SORUSU:
-Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
-İşte analiz edilecek dava metinleri:
+Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
+İşte analiz edilecek metinler:
 """ + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
+                
+
+        elif len(masked_texts)==1:
+            prompt=f"""
+        Aşağıdaki dava metnini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
+        Davanın Kronolojik sıralamasını ve olayları tarihleriyle birlikte gg/aa/yyyy şeklinde 'DAVANIN KRONOLOJİSİ:' başlığı altında,
+        Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
+        Davacının bütün Argümanlarını eksiksiz bir şekilde 'DAVACININ ARGÜMANLARI:' başlığı altında,
+        Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
+        'POLİÇE KARŞILAŞTIRMASI:'Poliçe Dökümanı yüklenmemiştir.' başlığı altında yaz,
+        'Kullanıcı Sorusu'nun cevabını metni doğru bir şekilde analiz ederek soruyu 'Soru:' kalın bir şekilde  ve cevabını 'Cevap:' 'KULLANICI SORUSU:' başlığı altında yaz.
+
+        Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
+        
+DİLEKÇE ÖZETİ:
+DAVANIN KRONOLOJİSİ:
+EMSAL YARGITAY KARARLARI:
+DAVACININ ARGÜMANLARI:
+GÖZDEN KAÇAN ARGÜMANLAR:
+POLİÇE KARŞILAŞTIRMASI:
+KULLANICI SORUSU:
+Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. 
+İşte analiz edilecek dava  dilekçesi metni:
+            """ +"\n\n".join(masked_texts[0])
+                
+        print('Promtum:', prompt) #debug
+        # Prompt oluştur
+#         prompt = f"""
+#         Aşağıdaki dava metinlerini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
+#         Davanın Kronolojik sıralamasını ve olayları tarihleriyle birlikte gg/aa/yyyy şeklinde 'DAVANIN KRONOLOJİSİ:' başlığı altında,
+#         Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
+#         Davacının bütün Argümanlarını 'DAVACININ ARGÜMANLARI:' başlığı altında,
+#         Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
+#         Metinde 'Metin 2:' kelimesini görürsen eğer Poliçe ile Dava Metnini detaylıca karşılaştır ve 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında yaz,
+#         'Kullanıcı Sorusu'nun cevabını metni doğru bir şekilde analiz ederek soruyu ve cevabını 'KULLANICI SORUSU:' başlığı altında yaz.
+
+#         Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
+        
+# DİLEKÇE ÖZETİ:
+# DAVANIN KRONOLOJİSİ:
+# EMSAL YARGITAY KARARLARI:
+# DAVACININ ARGÜMANLARI:
+# GÖZDEN KAÇAN ARGÜMANLAR:
+# POLİÇE KARŞILAŞTIRMASI:
+# KULLANICI SORUSU:
+# Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. Hukuki olmayan metinlere "Sadece hukuki davalara cevap veriyorum!" cevabını ver. 
+# İşte analiz edilecek dava metinleri:
+# """ + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
         # Kullanıcıdan gelen metni prompt'a ekle
         if user_input:
             prompt += f"\n\nKullanıcı Sorusu:\n{user_input}"

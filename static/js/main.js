@@ -108,8 +108,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 name.textContent = file.name;
                 name.classList.add('file-name');
     
+                // Dosya silme butonu ekle
+                const deleteButton = document.createElement('button');
+                deleteButton.innerHTML = '&times;'; // × işareti
+                deleteButton.classList.add('file-delete-btn');
+                deleteButton.addEventListener('click', () => {
+                    fileBox.remove();
+                    // Dosyayı FileList'ten kaldırma
+                    const newFileList = Array.from(fileInput.files).filter(f => f.name !== file.name);
+                    const dataTransfer = new DataTransfer();
+                    newFileList.forEach(f => dataTransfer.items.add(f));
+                    fileInput.files = dataTransfer.files;
+                    
+                    updateSubmitButton();
+                    if (fileInput.files.length === 0) {
+                        fileInfo.style.display = 'none';
+                    }
+                });
+    
                 fileBox.appendChild(icon);
                 fileBox.appendChild(name);
+                fileBox.appendChild(deleteButton);
                 fileInfo.appendChild(fileBox);
             });
     

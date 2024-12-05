@@ -313,6 +313,17 @@ result-container::-webkit-scrollbar-thumb:hover {
     display: block;
 }
 
+.tab-button.kullanici-sorusu-tab:hover,
+.tab-button.kullanici-sorusu-tab.active {
+    background-color: #9247A3; /* New background color for hover and active states */
+    color: white; /* Text color remains white */
+    
+}
+.tab-button.kullanici-sorusu-tab:after {
+    background-color: #9247A3;
+}
+
+
 .result-container {
     margin-top: 20px;
 }
@@ -339,23 +350,46 @@ result-container::-webkit-scrollbar-thumb:hover {
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 20px;
-    box-shadow: 0px 7px 6px 0px rgb(38, 193, 151, 0.13);
+    box-shadow: 0px 7px 6px 0px rgba(38, 193, 151, 0.13);
     z-index: 1000;
     max-width: 400px;
-    text-align: center;
+    text-align: left; /* Sol hizalama */
 }
 
 .info-box h2 {
     margin-top: 0;
     color: #1b7c60;
+    text-align: center; /* Başlık ortalanmış */
 }
 
 .info-box ul {
     list-style-type: none;
     padding: 0;
-
+    margin: 0; /* Varsayılan marjı kaldır */
 }
 
 .info-box li {
     margin-bottom: 10px;
+    text-align: left; /* Sol hizalama */
+    line-height: 1.5; /* Satır yüksekliği */
+}
+
+.file-delete-btn {
+    background-color: transparent;
+    border: none;
+    color: red;
+    font-size: 20px;
+    cursor: pointer;
+    margin-left: 10px;
+}
+
+.file-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 5px;
+    padding: 10px;
+    background-color: #fff;
+    border: 0.5px solid #efefef;
+    border-radius: 10px;
 }
