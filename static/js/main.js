@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitButton = document.querySelector('.submit-button');
     const form = document.getElementById('analysis-form');
     const infoBox = document.getElementById('info-box');
+    const infoIcon = document.getElementById('info-icon');
     const loadingAnimation = document.getElementById('loading-animation');
     const resultContainer = document.querySelector('.result-container');
     const fileInput = document.getElementById('file-input');
@@ -12,16 +13,53 @@ document.addEventListener('DOMContentLoaded', function() {
     const tabs = document.getElementById('tabs');
     const tabButtons = document.querySelectorAll('.tab-button');
     const tabContents = document.querySelectorAll('.tab-content');
+    const warningMessage = document.getElementById('warning-message');
     
+    function toggleInfoBox() {
+    if (infoBox.classList.contains('minimized')) {
+        infoBox.classList.remove('minimized');
+        setTimeout(() => {
+            infoBox.style.display = 'block';
+        }, 300); // Match the transition duration
+        // infoIcon.style.display = '';
+    } else {
+        infoBox.classList.add('minimized');
+        setTimeout(() => {
+            infoBox.style.display = 'none';
+        }, 300); // Match the transition duration
+        infoIcon.style.display = 'block';
+    }
+}
+
+    let timerInterval;
+    let startTime;
+    let elapsedTime = 0; // Elapsed time variable
+    
+    function startTimer() {
+        startTime = Date.now();
+        timerInterval = setInterval(() => {
+            elapsedTime = (Date.now() - startTime) / 1000;
+            document.getElementById('timer').textContent = elapsedTime.toFixed(2);
+        }, 10);
+        console.log("Timer başlatıldı");
+    }
+    
+    function stopTimer() {
+        clearInterval(timerInterval);
+        console.log("Timer durdu, süre:", elapsedTime.toFixed(2));
+        // Store the elapsed time in local storage
+        localStorage.setItem('elapsedTime', elapsedTime.toFixed(2));
+    }
+
     function updateSubmitButton() {
         if (inputText.value.trim().length > 0 || fileInput.files.length > 0) {
             submitButton.removeAttribute('disabled');
             submitButton.classList.add('active');
-            inputText.removeAttribute('disabled'); // Textarea'yı etkinleştir
+            inputText.removeAttribute('disabled');
         } else {
             submitButton.setAttribute('disabled', 'disabled');
             submitButton.classList.remove('active');
-            inputText.setAttribute('disabled', 'disabled'); // Textarea'yı devre dışı bırak
+            inputText.setAttribute('disabled', 'disabled');
         }
     }
 
@@ -37,14 +75,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    
     inputText.addEventListener('input', () => {
         updateSubmitButton();
         adjustTextareaHeight();
     });
-    
+
+    inputText.addEventListener('focus', () => {
+        if (!infoBox.classList.contains('minimized')) {
+            toggleInfoBox(true);
+        }
+    });
+
+    infoIcon.addEventListener('click', () => {
+        toggleInfoBox();
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!infoBox.contains(e.target) && !infoIcon.contains(e.target) && !inputText.contains(e.target)) {
+            if (!infoBox.classList.contains('minimized')) {
+                toggleInfoBox(true);
+            }
+        }
+    });
+      // Function to display warning message
+      function displayWarning(message) {
+        warningMessage.textContent = message;
+        warningMessage.classList.add('visible');
+    }
+
+    // Example of handling API response
+    function handleApiResponse(response) {
+        try {
+            // Assume response is an object with a 'data' property
+            if (!response.data || typeof response.data !== 'object') {
+                throw new Error('Unexpected response format');
+            }
+            // Process the response data
+            // ...
+        } catch (error) {
+            displayWarning('API yanıtı beklenen formatta değil. Lütfen daha sonra tekrar deneyin.');
+        }
+    }
+
+    // Form gönderim olay dinleyicisini değiştirin
     form.addEventListener('submit', (e) => {
         e.preventDefault();
         if (!submitButton.hasAttribute('disabled')) {
+            startTimer(); // Timer'ı başlat
             infoBox.style.display = 'none';
             loadingAnimation.style.display = 'block';
             resultContainer.style.display = 'none';
@@ -60,6 +138,9 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(response => response.text())
             .then(html => {
+                stopTimer(); // Timer'ı durdur
+                console.log("Yanıt alındı, timer durmalı");
+                
                 // Sayfayı yenile, ama geçmişi değiştirmeden
                 document.open();
                 document.write(html);
@@ -68,10 +149,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Yükleme animasyonunu gizle
                 loadingAnimation.style.display = 'none';
                 infoBox.style.display = 'none';
-
+    
+                // Retrieve the elapsed time from local storage and display it
+                const storedElapsedTime = localStorage.getItem('elapsedTime');
+                if (storedElapsedTime) {
+                    document.getElementById('timer').textContent = storedElapsedTime;
+                }
+    
             })
             .catch(error => {
-                console.error('Error:', error);
+                console.error('Hata:', error);
+                stopTimer(); // Timer'ı durdur
                 loadingAnimation.style.display = 'none';
             });
         }

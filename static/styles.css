@@ -25,6 +25,35 @@
         background-position: 0 0;
     }
 }
+@keyframes shrinkToIcon {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(50%, -50%) scale(0);
+        opacity: 0;
+    }
+}
+
+@keyframes expandFromIcon {
+    0% {
+        transform: translate(50%, -50%) scale(0);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+@keyframes breathing {
+    0%, 100% {
+        box-shadow: 0px 8px 12px 10px rgba(38, 193, 151, 0.13);
+    }
+    50% {
+        box-shadow: 0px 8px 12px 20px rgba(38, 193, 151, 0.13);
+    }
+}
 
 @font-face {
     font-family: 'Pluto Sans Light';
@@ -102,7 +131,15 @@ header .logo img {
     flex-direction: column; /* Flex yönünü değiştir */
     align-items: flex-start;
 }
-
+.timer {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    color: #333;
+    /* Add any additional styling you need */
+}
 .textarea-container textarea {
     background-color: #f8f9fa;
     padding: 10px 50px 10px 50px; /* Sağ tarafta buton için yer bırakın */
@@ -119,6 +156,9 @@ header .logo img {
     min-height: 1.2em;
     /* transition: height 0.2s ease; */
     max-height: calc(1.2em * 7);  
+}
+.textarea-container:focus-within {
+    animation: breathing 2s infinite ease-in-out;
 }
 
 .textarea-container textarea::placeholder {
@@ -177,6 +217,7 @@ header .logo img {
     overflow-y: auto;
     box-sizing: border-box;
     word-wrap: break-word;
+    box-shadow: 0px 7px 6px 0px rgba(38, 193, 151, 0.13);
 }
 
 .alert {
@@ -345,7 +386,7 @@ result-container::-webkit-scrollbar-thumb:hover {
     position: fixed;
     top: 50%;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -50%) scale(1);
     background-color: #f8f9fa;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -353,8 +394,34 @@ result-container::-webkit-scrollbar-thumb:hover {
     box-shadow: 0px 7px 6px 0px rgba(38, 193, 151, 0.13);
     z-index: 1000;
     max-width: 400px;
-    text-align: left; /* Sol hizalama */
+    text-align: left;
+    transition: transform 0.5s ease, opacity 0.5s ease; /* Smooth transition */
+    opacity: 1;
 }
+
+.info-box.minimized {
+    transform: translate(50%, -50%) scale(0); /* Move to top-right and scale down */
+    opacity: 0;
+    pointer-events: none; /* Disable interaction when minimized */
+}
+
+
+.info-icon {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: none; /* Başlangıçta gizli */
+    z-index: 1001;
+    transition: transform 0.3s ease;
+}
+    
+.info-icon:hover {
+    transform: scale(1.1);
+}
+
 
 .info-box h2 {
     margin-top: 0;
@@ -392,4 +459,29 @@ result-container::-webkit-scrollbar-thumb:hover {
     background-color: #fff;
     border: 0.5px solid #efefef;
     border-radius: 10px;
+}
+
+.warning-message {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0px 7px 6px 0px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-width: 400px;
+    text-align: center;
+    font-size: 18px;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.warning-message.visible {
+    opacity: 1;
+    pointer-events: all;
 }

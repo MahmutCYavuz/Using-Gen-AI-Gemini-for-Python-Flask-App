@@ -12,7 +12,9 @@
     <header>
         <div class="container">
             <div class="logo">
-                <img src="{{ url_for('static', filename='image/Neova-Sigorta_Logo.png') }}" alt="Neova Sigorta Logo">
+                <a href="{{ url_for('index') }}">
+                    <img src="{{ url_for('static', filename='image/Neova-Sigorta_Logo.png') }}" alt="Neova Sigorta Logo">
+                </a>
             </div>
             <h1 class="title">NeoLawyer</h1>
         </div>
@@ -28,6 +30,7 @@
             <li><strong>Analiz Et:</strong> Sistemimiz, yüklenen dosyayı ve sorunuzu analiz ederek size özel bir cevap sunacaktır.</li>
         </ul>
     </div>
+    <img id="info-icon" class="info-icon" src="{{ url_for('static', filename='image/icons8-info.svg') }}" alt="Info">
     <div class="container">
         {% if message %}
         <div class="message {{ message.type }}">
@@ -56,6 +59,7 @@
                     <span id="file-name" class="file-name"></span>
                 </div>
                 <textarea id="input_text" name="input_text" placeholder="Dosyanızı yükledikten sonra sorunuzu yazabilirsiniz 😊" disabled></textarea>
+                <span id="timer" class="timer">0.00</span> <!-- Timer element -->
                 <button type="submit" class="submit-button" disabled>
                     <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
                 </button>
@@ -80,6 +84,9 @@
                 <div id="kullanici-sorusu" class="tab-content">{{ result1.get('KULLANICI SORUSU:', '') | safe }}</div>
             {% endif %}
         </div>
+    </div>
+    <div id="warning-message" class="warning-message" style="display: none;">
+        <!-- Warning message will be inserted here -->
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
