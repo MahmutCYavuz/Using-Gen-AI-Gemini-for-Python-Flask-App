@@ -356,12 +356,12 @@ result-container::-webkit-scrollbar-thumb:hover {
 
 .tab-button.kullanici-sorusu-tab:hover,
 .tab-button.kullanici-sorusu-tab.active {
-    background-color: #9247A3; /* New background color for hover and active states */
+    background-color: #0075C9; /* New background color for hover and active states */
     color: white; /* Text color remains white */
     
 }
 .tab-button.kullanici-sorusu-tab:after {
-    background-color: #9247A3;
+    background-color: #0075C9;
 }
 
 
@@ -573,4 +573,15 @@ result-container::-webkit-scrollbar-thumb:hover {
     .info-box li {
         font-size: 14px;
     }
+}
+
+.footer-note {
+    text-align: center;
+    font-size: 10px;
+    color: #666; /* Yazı rengi */
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
 }

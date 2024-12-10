@@ -59,7 +59,17 @@ def extract_text_from_files(files):
         else:
             continue
 
-        texts.append(text)
+        # Metni maskele
+        masked_text = redact_sensitive_info(text)
+        texts.append(masked_text)
+
+        # Maskelenmiş metin dosyası için yeni bir dosya adı oluştur
+        masked_filename = f"{os.path.splitext(filename)[0]} Maskelenmiş Hali.txt"
+        masked_file_path = os.path.join(app.config['UPLOAD_FOLDER'], masked_filename)
+
+        # Maskelenmiş metni yeni bir dosyaya yaz
+        with open(masked_file_path, 'w', encoding='utf-8') as f:
+            f.write(masked_text)
 
     return texts
 
@@ -90,7 +100,22 @@ def redact_sensitive_info(text):
         (r'\b(VKN|Vergi No):?\s*\d{10}\b', 'VKN: **********'),  # VKN
         (r'\b[A-ZÇĞİÖŞÜ]+(?:\s[A-ZÇĞİÖŞÜ]+)?/[A-ZÇĞİÖŞÜ]+(?:\s[A-ZÇĞİÖŞÜ]+)?\b', '********/********'),  # Şehir/ilçe isimleri
         (r'\b[A-ZÇĞİÖŞÜ]+[\s][A-ZÇĞİÖŞÜ]+\s+\([A-ZÇĞİÖŞÜ]+\)\s+HUKUK\s+MAHKEMESİ\b', '******** Mahkemesi'),  # Mahkeme isimleri
-        (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '********@*****.***') # E-posta adreslerinin maskelenmesi
+        (r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', '********@*****.***'), # E-posta adreslerinin maskelenmesi
+        (r'0[-\s]*\d{3}[-\s]*\d{3}[-\s]*\d{2}[-\s]*\d{2}','0-*** *** ** **'),
+         (r'\bEMRAH ÇELİK\b', '******** ********'),
+        (r'\b441\d{6}76\b', '**********'),
+        (r'\b35PFK25\b', '********'),
+        (r'\bBM07186\b', '********'),
+        (r'\bNM0FXXTTFFBM07186\b', '********'),
+        (r'\bHasan\b', '********'),
+        (r'\bAv\. Fatih\b', '********'),
+        (r'\bAv\. Rıdvan\b', '********'),
+        (r'\bMurat\b', '********'),
+        (r'\b0-232 251 51 60\b', '********'),
+        (r'\b35 PFK\b', '********'),
+        (r'\b35 NN\b', '********'),
+        (r'\bGazi Mah\. .*? Gaziemir/İZMİR\b', '******** ********'),
+        (r'\bKozyatağı Mah\. .*? Kadıköy / İstanbul\b', '******** ********') 
     ]
 
     # Regex ile metin maskeleme
@@ -105,13 +130,13 @@ def redact_sensitive_info(text):
             # İsimleri maskele
             text = re.sub(rf'\b{re.escape(name)}\b', '********', text, flags=re.IGNORECASE)
      # Hassas kelimeleri maskele
-    sensitive_words = ['Neova Katılım Sigorta', 'Neova Katılım', 'Neova','AcnTurk', 'AKSigorta', 'Allianz', 'Anadolu', 'Arex', 'Atradius', 'Atlas', 'Aveon Global', 'Axa', 'Bereket', 'BNP Paribas Cardif', 'BUPA Acıbadem', 'CHUBB', 'Coface', 'Corpus', 'Doga', 'Emaa', 'Ethica', 'Euler Hermes', 'Eureko', 'Fiba', 'Generali', 'Global World', 'GRI', 'GIG', 'HDI', 'HDI Katılım', 'Hepiyi', 'Koru', 'Magdeburger', 'Mapfre', 'Medisa', 'Neova Katılım', 'Orient', 'Quick', 'Prive', 'Ray', 'Sompo', 'Şeker', 'Mellce', 'Turkcell Dijital', 'Türk Nippon', 'Türk P ve I', 'Türkiye Katılım', 'Unico', 'VHV Allgemeine', 'Zurich','Artun']
+    sensitive_words = ['Neova Katılım Sigorta', 'Neova Katılım', 'Neova','AcnTurk', 'AKSigorta', 'Allianz', 'Anadolu', 'Arex', 'Atradius', 'Atlas', 'Aveon Global', 'Axa', 'Bereket', 'BNP Paribas Cardif', 'BUPA Acıbadem', 'CHUBB', 'Coface', 'Corpus', 'Doga', 'Emaa', 'Ethica', 'Euler Hermes', 'Eureko', 'Fiba', 'Generali', 'Global World', 'GRI', 'GIG', 'HDI', 'HDI Katılım', 'Hepiyi', 'Koru', 'Magdeburger', 'Mapfre', 'Medisa', 'Neova Katılım', 'Orient', 'Quick', 'Prive','Papağan', 'Ray', 'Sompo', 'Şeker', 'Mellce', 'Turkcell Dijital', 'Türk Nippon', 'Türk P ve I', 'Türkiye Katılım', 'Unico', 'VHV Allgemeine', 'Zurich','Artun']
     for word in sensitive_words:
         # Kelime grubunu tam olarak eşleştir
         text = re.sub(rf'\b{re.escape(word)}\b', '********', text, flags=re.IGNORECASE)
 
     # Debug: Maskeleme sonrası metni yazdır
-    print("Maskeleme sonrası metin:", text, end=' ')
+    # print("Maskeleme sonrası metin:", text, end=' ')
 
     return text
 
@@ -208,7 +233,7 @@ KULLANICI SORUSU:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
 İşte analiz edilecek metinler:
 """ + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
-                
+                print("Prompt (Çoklu Metin): Oluşturuldu")
 
         elif len(masked_texts)==1:
             prompt=f"""
@@ -278,8 +303,8 @@ KULLANICI SORUSU:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
 İşte analiz edilecek metinler:
             """ +"\n\n".join(masked_texts[0])
-                
-        print('Promtum:', prompt) #debug
+        print("Prompt (Tekli Metin): Oluşturuldu")      
+        # print('Promtum:', prompt) #debug
         # Prompt oluştur
 #         prompt = f"""
 #         Aşağıdaki dava metinlerini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
@@ -310,7 +335,7 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
             prompt += f"\n\nKullanıcı Sorusu:\n{user_input}"
 
             #Debug amaçlı:
-            print('Promt:',prompt)
+            # print('Promt:',prompt)
         # OpenAI API çağrısı
         try:
             print("API çağrısı yapılıyor...")
