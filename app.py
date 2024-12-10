@@ -111,7 +111,7 @@ def redact_sensitive_info(text):
         text = re.sub(rf'\b{re.escape(word)}\b', '********', text, flags=re.IGNORECASE)
 
     # Debug: Maskeleme sonrası metni yazdır
-    print("Maskeleme sonrası metin:", text)
+    print("Maskeleme sonrası metin:", text, end=' ')
 
     return text
 
@@ -212,13 +212,59 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
 
         elif len(masked_texts)==1:
             prompt=f"""
-        Aşağıdaki dava metnini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
-        Davanın Kronolojik sıralamasını ve olayları tarihleriyle birlikte gg/aa/yyyy şeklinde 'DAVANIN KRONOLOJİSİ:' başlığı altında,
-        Davaya ilişkin geçmiş emsal yargıtay kararlarını internetten bul ve içeriğini 'EMSAL YARGITAY KARARLARI:' başlığı altında,
-        Davacının bütün Argümanlarını eksiksiz bir şekilde 'DAVACININ ARGÜMANLARI:' başlığı altında,
-        Gözden Kaçan ve Zorluk çıkarabilecek Argümanları 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
-        'POLİÇE KARŞILAŞTIRMASI:'Poliçe Dökümanı yüklenmemiştir.' başlığı altında yaz,
-        'Kullanıcı Sorusu'nun cevabını Lütfen soruyu dikkate alarak hukuki açıdan detaylı ve doğru bir cevap ver. Soruda belirtilen konuya dair daha fazla açıklama veya kaynaklar gerekiyorsa, bunları da ekleyerek yanıtını genişlet. 'KULLANICI SORUSU:' başlığı altında yaz.
+        Sana yollanan metin bir dava dilekçe metni. Bu metni analiz etmeni isteyeceğim.
+
+        Dava dilekçesini analiz et ve şu sorulara yanıt ver:
+
+Dava dilekçesinde belirtilen taraflar kimlerdir ve sigorta poliçesiyle ilişkileri nedir?
+Davacı hangi gerekçelerle talepte bulunuyor ve bu gerekçeler poliçe kapsamında mı?
+Dava konusu olay, poliçe kapsamındaki teminatlarla uyumlu mu? Poliçede istisna olarak belirtilen bir durum var mı?
+Olayın gerçekleşme tarihi ile dava açma tarihi arasındaki ilişkiyi değerlendir. Zamanaşımı süresi aşılmış mı?
+Davacının sunduğu deliller ve hukuki dayanaklar nelerdir? Bu dayanakların poliçe ve yasal düzenlemelerle uyumluluğunu analiz et.
+Davacının taleplerinin sigorta şirketinin yükümlülükleriyle uyumluluğunu değerlendir.
+Analizi net ve detaylı bir şekilde yanıtla. Yukarıdaki soruların cevaplarını'DİLEKÇE ÖZETİ:' başlığı altında,
+
+        Aşağıdaki dava dilekçesini analiz ederek olayların kronolojik sırasını çıkar. Lütfen şu bilgileri belirt:
+
+Olayların tarihi ve sırasıyla açıklaması.
+Dava konusu olayın gerçekleşme tarihi.
+Sigortalının veya diğer tarafların sigorta şirketine başvuru tarihi ve verilen yanıtlar.
+Davanın açılma tarihi ve diğer hukuki süreçler.
+Süreçte belirtilen herhangi bir zamanaşımı, yasal süre veya kritik tarihler.
+Her bir aşamayı kısa ve net şekilde kronolojik sıraya göre 'DAVANIN KRONOLOJİSİ:' başlığı altında,
+
+        Belirtilen dava konusu için Yargıtay'ın verdiği emsal kararları bul:
+
+Dava konusu: [Dava konusunu açıkça belirt, örn. 'Sigorta poliçesindeki teminat kapsamı dışındaki zararlar nedeniyle açılan tazminat davaları']
+Aranan hukuki çerçeve: [İlgili kanun ve maddeleri belirt, örn. 'Türk Ticaret Kanunu madde 1423']
+Emsal karar kriterleri:
+Yargıtay dairesi ve karar numarası (varsa).
+Karar metninde dava konusu ile doğrudan bağlantılı olan hususlar.
+Davalı ve davacı lehine oluşturulan argümanlar.
+Dava sonucuna etkisi olan önemli hukuki değerlendirmeler.
+Lütfen kararların kısa özetlerini ve davanın bağlamıyla ilişkisini sun. Ayrıca, verilen emsal kararların hangi tarihte alındığını belirt. 'EMSAL YARGITAY KARARLARI:' başlığı altında,
+
+        Aşağıdaki dava dilekçesini analiz ederek davacının argümanlarını çıkar:
+
+Davacının ileri sürdüğü iddialar nelerdir?
+İddialarını desteklemek için hangi olaylar veya durumlara atıfta bulunuyor?
+Hukuki dayanakları nelerdir? (Belirtilen yasa, madde, sözleşme hükümleri vb.)
+Davacı hangi hakları veya tazminatları talep ediyor?
+Sunulan deliller nelerdir ve davacı bu delillerle hangi iddialarını destekliyor?
+Analizi kısa ve net bir şekilde sun, ancak detayları kaybetme. 'DAVACININ ARGÜMANLARI:' başlığı altında,
+
+        Aşağıdaki dava dilekçesini analiz et ve gözden kaçmış olabilecek argümanları veya önemli noktaları tespit et.
+
+Davacının veya davalının dilekçesinde eksik veya zayıf bir hukuki argüman var mı?
+Dava dilekçesinde belirtilmeyen ancak davanın sonucu üzerinde etkili olabilecek başka önemli bir olgu veya durum var mı?
+Hukuki dayanaklardan herhangi birisi atlanmış olabilir mi? (Özellikle dava konusu ile ilgili ek kanun, madde veya hukuki ilkeler)
+Davacının iddialarını desteklemek için kullanmadığı ancak eklenmesi gereken deliller var mı?
+Dava dilekçesinde daha güçlü bir argüman yaratabilecek potansiyel açıklamalar veya yönler var mı?
+Lütfen gözden kaçmış olabilecek her bir noktayı net bir şekilde belirt. 'GÖZDEN KAÇAN ARGÜMANLAR:' başlığı altında,
+
+        'Poliçe dosyası yüklenmemiştir. Poliçe Karşılaştırması yapmak istiyorsanız lütfen ilgili dava dilekçesiyle birlikte Poliçe dosyasını da yükleyiniz' 'POLİÇE KARŞILAŞTIRMASI:' başlığı altında,
+
+        'Kullanıcı Sorusu'nun cevabını metni doğru bir şekilde analiz ederek soruyu soru işaretiyle ve cevabını 'KULLANICI SORUSU:' başlığı altında,
 
         Her bölümü kesinlikle belirtilen başlıkla başlat ve içeriği bu başlığın altına yaz.
         
@@ -229,8 +275,8 @@ DAVACININ ARGÜMANLARI:
 GÖZDEN KAÇAN ARGÜMANLAR:
 POLİÇE KARŞILAŞTIRMASI:
 KULLANICI SORUSU:
-Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz. 
-İşte analiz edilecek dava  dilekçesi metni:
+Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
+İşte analiz edilecek metinler:
             """ +"\n\n".join(masked_texts[0])
                 
         print('Promtum:', prompt) #debug

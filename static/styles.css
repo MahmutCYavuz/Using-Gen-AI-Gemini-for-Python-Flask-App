@@ -387,7 +387,7 @@ result-container::-webkit-scrollbar-thumb:hover {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(1);
-    background-color: #f8f9fa;
+    background-color: #fff; /* Added transparency to the background color */
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 20px;
@@ -484,4 +484,93 @@ result-container::-webkit-scrollbar-thumb:hover {
 .warning-message.visible {
     opacity: 1;
     pointer-events: all;
+}
+
+/* Add media queries for responsive design */
+@media (max-width: 768px) {
+    header .container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .form {
+        width: 90%;
+        bottom: 10px;
+    }
+
+    .textarea-container {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .textarea-container textarea {
+        padding: 10px 10px 10px 10px;
+        width: 100%;
+    }
+
+    .file-upload-icon {
+        left: 10px;
+        top: 10px;
+    }
+
+    .submit-button {
+        right: 10px;
+        top: 10px;
+    }
+
+    .tabs {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .tab-button {
+        width: 100%;
+        margin-bottom: 5px;
+    }
+
+    .result-container {
+        max-height: 300px;
+    }
+
+    .info-box {
+        width: 90%;
+        max-width: none;
+    }
+
+    .info-icon {
+        top: 10px;
+        right: 10px;
+    }
+
+    .file-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .file-box {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 20px;
+    }
+
+    .textarea-container textarea {
+        font-size: 16px;
+    }
+
+    .tab-button {
+        font-size: 14px;
+    }
+
+    .info-box h2 {
+        font-size: 18px;
+    }
+
+    .info-box li {
+        font-size: 14px;
+    }
 }
