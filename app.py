@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 import markdown
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -8,6 +8,12 @@ import docx
 from PyPDF2 import PdfReader
 import re
 from transformers import pipeline
+from itsdangerous import URLSafeTimedSerializer
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import logger
+
 
 
 # Çevresel değişkenleri yükle
@@ -15,6 +21,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Gizli anahtar .env dosyasından alınır
+email_key = os.getenv('EMAIL_KEY')
 
 # OpenAI istemcisini oluştur
 client = OpenAI(
@@ -45,6 +52,8 @@ def extract_text_from_pdf(file_path):
 def extract_text_from_docx(file_path):
     doc = docx.Document(file_path)
     return "\n".join([para.text for para in doc.paragraphs])
+
+
 def extract_text_from_files(files):
     texts = []
     for file in files:
@@ -59,17 +68,7 @@ def extract_text_from_files(files):
         else:
             continue
 
-        # Metni maskele
-        masked_text = redact_sensitive_info(text)
-        texts.append(masked_text)
-
-        # Maskelenmiş metin dosyası için yeni bir dosya adı oluştur
-        masked_filename = f"{os.path.splitext(filename)[0]} Maskelenmiş Hali.txt"
-        masked_file_path = os.path.join(app.config['UPLOAD_FOLDER'], masked_filename)
-
-        # Maskelenmiş metni yeni bir dosyaya yaz
-        with open(masked_file_path, 'w', encoding='utf-8') as f:
-            f.write(masked_text)
+        texts.append(text)
 
     return texts
 
@@ -136,25 +135,116 @@ def redact_sensitive_info(text):
         text = re.sub(rf'\b{re.escape(word)}\b', '********', text, flags=re.IGNORECASE)
 
     # Debug: Maskeleme sonrası metni yazdır
-    # print("Maskeleme sonrası metin:", text, end=' ')
+    print("Maskeleme sonrası metin:", text)
 
     return text
 
+serializer = URLSafeTimedSerializer(app.secret_key)
 
-@app.route("/", methods=["GET", "POST"])
+@app.route("/", methods = ["GET", "POST"])
+def login_page():
+        
+    if request.method == 'POST':            
+        email = request.form['email']  # Formdan email al
+
+        if not email:
+            flash("Lütfen geçerli bir e-posta adresi girin.", "error")
+            return redirect(url_for('login_page'))
+
+        try:
+            token = serializer.dumps(email, salt="email-confirm")
+            confirmation_link = url_for("confirm_email", token=token, _external=True)
+
+            # E-posta gönder
+            subject = "E-Posta Doğrulama"
+            body = f"Lütfen e-posta adresinizi doğrulamak için aşağıdaki bağlantıya tıklayın:\n\n{confirmation_link}"
+            send_email(email, subject, body)
+            flash("Doğrulama e-postası başarıyla gönderildi. Lütfen gelen kutunuzu kontrol edin.", "success")
+            flash("Bu sayfayı kapatabilirsiniz")
+        except Exception as e:
+            flash(f"E-posta gönderim hatası: {e}", "error")
+    return render_template('login.html')
+
+@app.route('/confirm/<token>')
+def confirm_email(token):
+    try:
+        # Token çözümleme ve email doğrulama
+        email = serializer.loads(token, salt='email-confirm', max_age=3600)  # Token geçerliliği: 1 saat
+        session["email"] = email
+
+        #logger.log_user_login(email)
+        #flash(f"E-posta adresiniz başarıyla doğrulandı: {email}", "success")
+        return redirect(url_for('index'))
+    except Exception as e:
+        flash(f"Token geçersiz veya süresi dolmuş: {e}", "error")
+        return redirect(url_for('login_page'))
+
+
+def send_email(email, subject, body):
+    smtp_server = "webmail.neova.com.tr"
+    port = 587
+    sender_email = "melik.ozdemir@neova.com.tr"
+    password = email_key
+
+    message = MIMEMultipart()
+    message["From"] = sender_email
+    message["To"] = email
+    message["Subject"] = subject
+    message.attach(MIMEText(body, "plain", "utf-8"))
+
+    try:
+        server = smtplib.SMTP(smtp_server, port)
+        server.starttls()
+        server.login(sender_email, password)
+        server.sendmail(sender_email, email, message.as_string())
+        print("E-posta başarıyla gönderildi.")
+    except Exception as e:
+        print(f"E-posta gönderilirken bir hata oluştu: {e}")
+        raise e
+    finally:
+        server.quit()
+
+
+@app.route("/index", methods=["GET", "POST"])
 def index():
     result1 = {}
     message = None
+
+    
+
+    if "email" not in session:
+        flash("Lütfen giriş yapın!", "warning")
+        return redirect(url_for("login_page"))
     
     if request.method == 'POST':
         
         # Dosya yükleme
         files = request.files.getlist('file')
+        # print(files)
+        # for file in files:
+        #     # print(file + "123456")
+        #     print(file)
+        #     if allowed_file(file.filename):
+        #         filename = secure_filename(file.filename)
+        #         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        #          # Dosyayı kaydet
+        #         try:
+        #             file.save(file_path)
+        #             # flash(f"Dosya başarıyla kaydedildi: {filename}", "success")
+        #         except Exception as e:
+        #             flash(f"Dosya kaydedilirken hata oluştu: {e}", "error")
+        #             continue
+
+
         texts = extract_text_from_files(files)
 
         # Metinleri maskele
         masked_texts = [redact_sensitive_info(text) for text in texts]
+        #Herbir maskelenmiş veri için log satırı oluştur.
+        for index, masked_data in enumerate(masked_texts):
+            logger.log_user_activity(email=session["email"], masked_data=masked_data)
 
+    
         # Kullanıcıdan gelen metin
         user_input = request.form.get('input_text', '').strip()
 
@@ -233,7 +323,7 @@ KULLANICI SORUSU:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
 İşte analiz edilecek metinler:
 """ + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
-                print("Prompt (Çoklu Metin): Oluşturuldu")
+                
 
         elif len(masked_texts)==1:
             prompt=f"""
@@ -303,8 +393,9 @@ KULLANICI SORUSU:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
 İşte analiz edilecek metinler:
             """ +"\n\n".join(masked_texts[0])
-        print("Prompt (Tekli Metin): Oluşturuldu")      
-        # print('Promtum:', prompt) #debug
+
+                
+        print('Promtum:', prompt) #debug
         # Prompt oluştur
 #         prompt = f"""
 #         Aşağıdaki dava metinlerini analiz et ve Dilekçe Özetini ve Dilekçede bulunan dosyaları madde madde alt alta yazıp'DİLEKÇE ÖZETİ:' başlığı altında,
@@ -335,7 +426,7 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
             prompt += f"\n\nKullanıcı Sorusu:\n{user_input}"
 
             #Debug amaçlı:
-            # print('Promt:',prompt)
+            #print('Promt:',prompt)
         # OpenAI API çağrısı
         try:
             print("API çağrısı yapılıyor...")
@@ -383,8 +474,8 @@ Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmam
             print("API çağrısı sırasında hata oluştu:", e)
             result1 = {"Hata": f"Hata oluştu: {e}"}
         
-        return render_template('index.html', result1=result1, message=message)
+        return render_template('index.html', result1=result1, message=message,  email=session["email"])
     
-    return render_template('index.html', result1=None, message=None)
+    return render_template('index.html', result1=None, message=None,  email=session["email"])
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

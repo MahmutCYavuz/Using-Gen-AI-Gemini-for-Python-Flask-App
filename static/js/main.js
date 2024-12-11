@@ -132,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const formData = new FormData(form);
             
             // AJAX ile formu gönder
-            fetch('/', {
+            fetch('/index', {
                 method: 'POST',
                 body: formData
             })

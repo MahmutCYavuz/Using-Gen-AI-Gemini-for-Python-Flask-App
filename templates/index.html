@@ -48,23 +48,23 @@
         </div>
 
         
-        <form id="analysis-form" method="post" class="form" enctype="multipart/form-data">
-            <div class="textarea-container">
-                <label for="file-input" class="file-upload-icon">
-                    <img src="{{ url_for('static', filename='image/upload_icon.svg') }}" alt="Yükle">
-                </label>
-                <input type="file" id="file-input" name="file" accept=".pdf, .docx" style="display: none;" multiple>
-                <div id="file-info" class="file-info" style="display:none;">
-                    <img id="file-icon" src="" alt="Dosya İkonu" class="file-icon">
-                    <span id="file-name" class="file-name"></span>
-                </div>
-                <textarea id="input_text" name="input_text" placeholder="Dosyanızı yükledikten sonra sorunuzu yazabilirsiniz 😊" disabled></textarea>
-                <!-- <span id="timer" class="timer">0.00</span> Timer element -->
-                <button type="submit" class="submit-button" disabled>
-                    <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
-                </button>
-            </div>
-        </form>
+        <form id="analysis-form" method="post" action="index.html" class="form" enctype="multipart/form-data">
+    <div class="textarea-container">
+        <label for="file-input" class="file-upload-icon">
+            <img src="{{ url_for('static', filename='image/upload_icon.svg') }}" alt="Yükle">
+        </label>
+        <input type="file" id="file-input" name="file" accept=".pdf, .docx" style="display: none;" multiple>
+        <div id="file-info" class="file-info" style="display:none;">
+            <img id="file-icon" src="" alt="Dosya İkonu" class="file-icon">
+            <span id="file-name" class="file-name"></span>
+        </div>
+        <textarea id="input_text" name="input_text" placeholder="Dosyanızı yükledikten sonra sorunuzu yazabilirsiniz 😊" disabled></textarea>
+        <button type="submit" class="submit-button" disabled>
+            <img src="{{ url_for('static', filename='image/output-onlinepngtools.png') }}" alt="Gönder">
+        </button>
+    </div>
+</form>
+
         <div id="loading-animation" class="loading-animation-container" style="display:none;">
             <div class="loading-animation" style="animation-delay: 0s;"></div>
             <div class="loading-animation" style="animation-delay: 0s;"></div>
@@ -89,10 +89,6 @@
         <!-- Warning message will be inserted here -->
     </div>
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-
-    <footer class="footer-note">NeoLawyer hata yapabilir. Önemli bilgileri kontrol edin.</footer>
-        
-    
 </body>
 
 </html>
