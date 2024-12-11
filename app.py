@@ -323,7 +323,7 @@ KULLANICI SORUSU:
 Eğer herhangi bir bölüm için bilgi yoksa, o bölüme "Yeterli bilgi bulunmamaktadır!" yaz.
 İşte analiz edilecek metinler:
 """ + "\n\n".join([f"Metin {i+1}:\n{masked_text}" for i, masked_text in enumerate(masked_texts)])
-                
+                print("Prompt (Çoklu Metin): Oluşturuldu")
 
         elif len(masked_texts)==1:
             prompt=f"""
