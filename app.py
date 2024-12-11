@@ -22,7 +22,7 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Gizli anahtar .env dosyasından alınır
 email_key = os.getenv('EMAIL_KEY')
-sender_email = os.getenv('SENDER_EMAIL')
+sender = os.getenv('SENDER_EMAIL')
 
 # OpenAI istemcisini oluştur
 client = OpenAI(
@@ -184,7 +184,7 @@ def confirm_email(token):
 def send_email(email, subject, body):
     smtp_server = "webmail.neova.com.tr"
     port = 587
-    sender_email = sender_email
+    sender_email = sender
     password = email_key
 
     message = MIMEMultipart()
