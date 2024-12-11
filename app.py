@@ -12,7 +12,7 @@ from itsdangerous import URLSafeTimedSerializer
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import logger
+# import logger
 
 
 
@@ -23,7 +23,10 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Gizli anahtar .env dosyasından alınır
 email_key = os.getenv('EMAIL_KEY')
 sender = os.getenv('SENDER_EMAIL')
+<<<<<<< Updated upstream
 
+=======
+>>>>>>> Stashed changes
 # OpenAI istemcisini oluştur
 client = OpenAI(
     api_key=os.getenv('OPENAI_API_KEY')
@@ -242,8 +245,8 @@ def index():
         # Metinleri maskele
         masked_texts = [redact_sensitive_info(text) for text in texts]
         #Herbir maskelenmiş veri için log satırı oluştur.
-        for index, masked_data in enumerate(masked_texts):
-            logger.log_user_activity(email=session["email"], masked_data=masked_data)
+        # for index, masked_data in enumerate(masked_texts):
+        #     logger.log_user_activity(email=session["email"], masked_data=masked_data)
 
     
         # Kullanıcıdan gelen metin
