@@ -1,0 +1,147 @@
+body {
+    font-family: 'Poppins',Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-image: 
+    url('/static/image/Vector.svg'),
+    url('/static/image/Vector2.svg');
+    background-size: contain, cover;
+    background-position: left, left;
+    background-repeat: no-repeat, no-repeat;
+}
+
+.login-container {
+    background-color: #ffffff;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+}
+
+.logo-container {
+    margin-bottom: 20px;
+}
+
+.logo {
+    max-width: 250px;
+}
+
+.welcome-message {
+    font-size: 20px;
+    color: #1b7c60;
+    margin-bottom: 30px;
+    font-weight: 600;
+}
+
+.message-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0 0 20px 0;
+}
+
+.message-list li {
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.message-list li.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.message-list li.success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.form-group {
+    width: 100%;
+    margin-bottom: 20px;
+    position: relative; /* Ensure the img can be positioned absolutely */
+}
+
+input[type="email"] {
+    width: 100%;
+    padding: 10px 40px 10px 10px; /* Add padding-right for icon space */
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    box-sizing: border-box;
+    outline: none; /* Remove default outline */
+    box-shadow: 0px 7px 6px 0px rgba(38, 193, 151, 0.13);
+}
+
+.email-icon {
+    position: absolute;
+    right: 10px; /* Adjust as needed */
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px; /* Adjust size as needed */
+    height: 20px; /* Adjust size as needed */
+    opacity: 0.5; /* Make the icon initially faded */
+    filter: grayscale(100%); /* Make the icon initially grayscale */
+    pointer-events: none; /* Ensure the icon does not interfere with input */
+}
+input[type="email"]:focus{
+    border-color: #1b7c60;
+    
+
+}
+input[type="email"]:focus + .email-icon {
+    opacity: 1; /* Make the icon fully visible */
+    filter: grayscale(0%); /* Remove grayscale effect */
+    
+}
+
+
+.submit-button {
+    padding: 10px 20px;
+    background-color: #1b7c60;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+.submit-button:hover {
+    background-color: #166a4f;
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        width: 90%;
+    }
+
+    .welcome-message {
+        font-size: 18px;
+    }
+
+    input[type="email"],
+    .submit-button {
+        font-size: 14px;
+    }
+}

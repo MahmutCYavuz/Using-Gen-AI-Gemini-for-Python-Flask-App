@@ -23,10 +23,6 @@ app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY')  # Gizli anahtar .env dosyasından alınır
 email_key = os.getenv('EMAIL_KEY')
 sender = os.getenv('SENDER_EMAIL')
-<<<<<<< Updated upstream
-
-=======
->>>>>>> Stashed changes
 # OpenAI istemcisini oluştur
 client = OpenAI(
     api_key=os.getenv('OPENAI_API_KEY')

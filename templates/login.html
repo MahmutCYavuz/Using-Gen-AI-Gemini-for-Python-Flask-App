@@ -3,24 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login</title>
+    <title>NeoLawyer - Login</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='image/favicon.png') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='login_styles.css') }}">
 </head>
 <body>
-    <h1>Login Page</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <ul>
-                {% for category, message in messages %}
-                    <li class="{{ category }}">{{ message }}</li>
-                {% endfor %}
-            </ul>
-        {% endif %}
-    {% endwith %}
-    <form method="POST" action="/">
-        <label for="email">Email:</label>
-        <input type="email" name="email" id="email" required>
-        <button type="submit">Gönder</button>
-    </form>
+    <div class="login-container">
+        <div class="logo-container">
+            <img src="http://teknolojizamani.neova.com.tr/img/neova.svg" alt="Neova Logo" class="logo">
+        </div>
+        <h2 class="welcome-message">NeoLawyer'a hoş geldin Neova'lı</h2>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="message-list">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <form method="POST" action="/" class="login-form">
+            <div class="form-group">
+                <input type="email" name="email" id="email" placeholder="Email" required>
+                <img src="{{ url_for('static', filename='image/mail-svgrepo-com.svg') }}"alt="email-logo" class="email-icon">
+            </div>
+            <button type="submit" class="submit-button">Login</button>
+        </form>
+    </div>
     
 </body>
 </html>
